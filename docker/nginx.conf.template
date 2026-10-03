@@ -1,0 +1,49 @@
+# Allowed Airtable proxy calls: reads, plus PATCH of a single record (ratings).
+map "$request_method:$uri" $oreas_airtable_allowed {
+    default 0;
+    "~^(GET|HEAD):" 1;
+    "~^PATCH:/api/airtable/v0/app[A-Za-z0-9]+/[A-Za-z0-9]+/rec[A-Za-z0-9]+$" 1;
+}
+
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Airtable proxy. The key comes from the container env and is added here,
+    # so it never reaches the browser.
+    location /api/airtable/ {
+        if ($oreas_airtable_allowed = 0) {
+            return 405;
+        }
+        client_max_body_size 64k;
+        resolver 1.1.1.1 8.8.8.8 valid=300s ipv6=off;
+        set $airtable https://api.airtable.com;
+        rewrite ^/api/airtable/(.*)$ /$1 break;
+        proxy_pass $airtable;
+        proxy_ssl_server_name on;
+        proxy_set_header Host api.airtable.com;
+        proxy_set_header Authorization "Bearer ${AIRTABLE_API_KEY}";
+        proxy_set_header Cookie "";
+        proxy_set_header X-Forwarded-For "";
+        proxy_hide_header Set-Cookie;
+        add_header Cache-Control "no-store" always;
+    }
+
+    location = /config.json {
+        add_header Cache-Control "no-store" always;
+    }
+
+    location /assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        try_files $uri =404;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+}

@@ -1,0 +1,153 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --color-accent-400: #fb7185;
+  --color-accent-500: #f43f5e;
+  --color-accent-600: #e11d48;
+  --color-brand-500: #8b5cf6;
+}
+
+:root {
+  color-scheme: light;
+  --bg: #e9edf3;
+  --surface: rgb(255 255 255 / 0.5);
+  --surface-strong: rgb(255 255 255 / 0.72);
+  --surface-solid: #ffffff;
+  --border: rgb(255 255 255 / 0.55);
+  --hairline: rgb(15 23 42 / 0.08);
+  --text: #0f172a;
+  --muted: #64748b;
+}
+
+:root.dark {
+  color-scheme: dark;
+  --bg: #0b1020;
+  --surface: rgb(15 23 42 / 0.45);
+  --surface-strong: rgb(15 23 42 / 0.7);
+  --surface-solid: #111827;
+  --border: rgb(255 255 255 / 0.1);
+  --hairline: rgb(255 255 255 / 0.08);
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  overflow: clip;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Frosted glass: strongly blurred, mostly transparent panels with a light inner highlight. */
+@utility glass {
+  background: var(--surface);
+  backdrop-filter: blur(28px) saturate(1.9) brightness(1.04);
+  -webkit-backdrop-filter: blur(28px) saturate(1.9) brightness(1.04);
+  border: 1px solid var(--border);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.25),
+    0 12px 36px -12px rgb(15 23 42 / 0.35),
+    0 2px 6px -2px rgb(15 23 42 / 0.12);
+}
+
+/* Denser glass for content-heavy surfaces (modals, mobile detail sheet). */
+@utility glass-strong {
+  background: var(--surface-strong);
+  backdrop-filter: blur(36px) saturate(1.8);
+  -webkit-backdrop-filter: blur(36px) saturate(1.8);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 60px -16px rgb(0 0 0 / 0.45);
+}
+
+@utility text-muted {
+  color: var(--muted);
+}
+
+@utility scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.4) transparent;
+}
+
+/* ---------- MapLibre tweaks ---------- */
+/* Keep bottom map controls above the mobile bottom sheet. */
+.maplibregl-ctrl-bottom-right,
+.maplibregl-ctrl-bottom-left {
+  bottom: var(--ctrl-bottom, 0px);
+  transition: bottom 300ms ease-out;
+}
+.maplibregl-popup-content {
+  padding: 0 !important;
+  border-radius: 14px !important;
+  overflow: hidden;
+  background: var(--surface-strong) !important;
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  color: var(--text);
+  box-shadow: 0 12px 30px -8px rgb(0 0 0 / 0.35) !important;
+}
+.maplibregl-popup-tip {
+  display: none;
+}
+.maplibregl-ctrl-group {
+  background: var(--surface) !important;
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border-radius: 12px !important;
+  border: 1px solid var(--border);
+}
+.dark .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1);
+}
+.dark .maplibregl-ctrl-attrib {
+  background: rgb(17 24 39 / 0.7);
+  color: #cbd5e1;
+}
+.dark .maplibregl-ctrl-attrib a {
+  color: #cbd5e1;
+}
+
+.photo-bubble {
+  width: 64px;
+  height: 64px;
+  border-radius: 9999px;
+  border: 3px solid white;
+  background: #cbd5e1 center / cover no-repeat;
+  box-shadow: 0 8px 20px -4px rgb(0 0 0 / 0.45);
+  cursor: pointer;
+  animation: bubble-in 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.photo-bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: white;
+  border-bottom: 0;
+}
+@keyframes bubble-in {
+  from {
+    transform: scale(0.3) translateY(20px);
+    opacity: 0;
+  }
+}
+
+.img-fade {
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+.img-fade.loaded {
+  opacity: 1;
+}

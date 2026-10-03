@@ -1,0 +1,28 @@
+{
+  "name": "oreas",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Oreas – travel planning map powered by Airtable",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tsconfig/svelte": "^5.0.8",
+    "@types/geojson": "^7946.0.16",
+    "svelte": "^5.57.1",
+    "svelte-check": "^4.7.6",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.2"
+  },
+  "dependencies": {
+    "@lucide/svelte": "^1.51.0",
+    "maplibre-gl": "^6.11.2"
+  }
+}
