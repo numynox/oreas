@@ -142,7 +142,7 @@
       {/key}
     </aside>
 
-    <div class="absolute bottom-6 z-10" style="left:{sideW + 26}px;{SIDE_ANIM}"><Legend /></div>
+    <div class="absolute bottom-3 z-10" style="left:{sideW + 26}px;{SIDE_ANIM}"><Legend /></div>
 
     <!-- Right column: toolbar + detail drawer (drawer always starts below the toolbar) -->
     <div
