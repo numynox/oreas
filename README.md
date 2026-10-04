@@ -1,22 +1,22 @@
 # Oreas
 
-A travel-planning map for activities stored in Airtable. Oreas shows every activity of a trip base on an interactive map, with filters, search, color coding, photos and a detail view, plus a day-by-day itinerary. It reads from Airtable; the only write is the rating (Priority) you set in **Rate** mode.
+A travel-planning map for activities stored in Airtable. Oreas shows every activity of a trip base on an interactive map, with filters, search, color coding, photos and a detail view, plus a day-by-day itinerary.
 
-Everything it uses is free: [Svelte 5](https://svelte.dev), [Vite](https://vite.dev), [Tailwind CSS](https://tailwindcss.com), [MapLibre GL JS](https://maplibre.org), plus map data from [OpenFreeMap](https://openfreemap.org), [OpenTopoMap](https://opentopomap.org), [OpenRailwayMap](https://www.openrailwaymap.org), [AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) and [GSI Japan](https://maps.gsi.go.jp/development/ichiran.html). No map API key is needed.
+Everything it uses is free: [Svelte 5](https://svelte.dev), [Vite](https://vite.dev), [Tailwind CSS](https://tailwindcss.com), [MapLibre GL JS](https://maplibre.org), plus map data from [OpenFreeMap](https://openfreemap.org), hillshade from [AWS Terrain Tiles](https://registry.opendata.aws/raster-public-geospatial-data/) and [GEBCO](https://www.gebco.net), and other open data.
 
 ## Features
 
-- **Map**: markers that you can color by type, status, region, priority or access. Nearby markers simply overlap (no clustering) and shrink when zoomed out. Hover a marker for a preview with a photo. Click it to fly there and see a photo bubble.
-- **Map styles**: Streets (follows the light/dark theme), Minimal, **Terrain** (hillshade and 3D relief from AWS Terrain Tiles; starts flat, tilt with right-drag or a two-finger drag), Topographic (OpenTopoMap), **Railways** (OpenRailwayMap overlay with every train line), Aerial photos and the official GSI Japan map. All are free and need no key.
+- **Map**: markers that you can color by type, status, region, priority or access. Nearby markers simply overlap (no clustering) and shrink when zoomed out. Hover a marker for a preview with a photo.
+- **Map styles**: Streets (follows the light/dark theme), Minimal, **Terrain** (hillshade and 3D relief from AWS Terrain Tiles; starts flat, tilt with right-drag or a two-finger drag), Topographic, Satellite, Railway (OSM Railway overlay) and More.
 - **Filters and search**: filter chips for type, status, region, priority and access (public transport / car). Search covers name, location and notes. Skipped and deprecated activities are hidden by default.
-- **Rate mode**: the **Rate** button walks through every active activity without a rating (in a geographic tour), zooms to it and shows its details with the choices Low, Medium, High and Must have (keys 1–4, ← → to go back or skip, Esc to stop). Ratings are written to the Priority column right away. Offline ratings are queued and sent when you're back online.
-- **Itinerary**: switch between **Explore** and **Itinerary** at the top of the panel (bookmarkable as `#itinerary`). The itinerary lists the trip day by day from the `Itinerary` table: date, day title, travel note, linked activities (with photos), notes, overnight city and accommodation. Both views share the same map (no reload when switching); the sidebar widens for the itinerary. In the itinerary the map shows the overnight stops joined in travel order and highlights the current day's activities, following the day you scroll to. Activities link back and forth: the explorer shows "Day N" badges, and the detail view lists the days an activity is planned on.
+- **Rate mode**: the **Rate** button walks through every active activity without a rating (in a geographic tour), zooms to it and shows its details with the choices Low, Medium, High and Must have. Ratings are saved to Airtable.
+- **Itinerary**: switch between **Explore** and **Itinerary** at the top of the panel (bookmarkable as `#itinerary`). The itinerary lists the trip day by day from the `Itinerary` table: date, day title, overnight city and accommodation, travel legs between days, and linked activities (from the activity table). The cost shown includes activity costs + travel + accommodation for each day.
 - **Details**: an image carousel with a fullscreen lightbox, duration, cost, booking flag, notes, the website and a Google Maps link.
 - **Unplaced activities**: records without Latitude/Longitude still appear in the list with an "Unplaced" badge.
 - **Offline-friendly cache**: data is stored in `localStorage`. It syncs automatically when the cache is more than 24 h old, or when you press sync.
-- **Offline images**: after each sync, the large thumbnail of every image is saved to IndexedDB in the background. Full-size images are saved when you first open them in the fullscreen viewer, or all at once with **Settings → Download everything for offline**. Settings also shows the online status and storage use.
-- **Offline app and map**: a service worker (production build only) caches the app itself, so Oreas starts without a connection. Every map area you look at is cached as you go. **Settings → Download map of activity area** pre-downloads the area covered by your activities and itinerary stops: an overview of the whole area (zoom up to 10, reduced automatically for trips spanning large distances) plus street level around each place. This covers the OpenFreeMap styles (Streets, Minimal, and the base of Terrain and Railways); the other raster maps and overlays are only cached as you view them.
-- **Installable**: a web app manifest lets you add Oreas to the home screen or install it as an app (Chrome, Edge, Safari, Firefox on Android). Downloads ask the browser to make storage persistent so cached data and images are not evicted; Settings shows whether it is. Firefox asks for permission. Safari may clear storage of sites that are not on the home screen after about 7 days without use.
+- **Offline images**: after each sync, the large thumbnail of every image is saved to IndexedDB in the background. Full-size images are saved when you first open them in the fullscreen viewer, or when you download them in Settings.
+- **Offline app and map**: a service worker (production build only) caches the app itself, so Oreas starts without a connection. Every map area you look at is cached as you go. **Settings → Download map** lets you select and download a region in advance.
+- **Installable**: a web app manifest lets you add Oreas to the home screen or install it as an app (Chrome, Edge, Safari, Firefox on Android). Downloads ask the browser to make storage persistent.
 - **Robust to column renames**: columns are referenced by Airtable field ID, so renaming a column changes nothing. If a column is deleted, Oreas asks you to pick a replacement in **Settings → Field mapping**.
 - Light and dark themes, plus a mobile bottom-sheet layout.
 
@@ -25,11 +25,11 @@ Everything it uses is free: [Svelte 5](https://svelte.dev), [Vite](https://vite.
 Create a [personal access token](https://airtable.com/create/tokens) with:
 
 - scopes `data.records:read`, `schema.bases:read` and `data.records:write` (only needed for ratings)
-- access limited to your trip base, for example **Japan 2027** (`appYOMAihqLlbtMdd`)
+- access limited to your trip base
 
 The base needs a table (default `Activities`) with at least a name column and `Latitude`/`Longitude` number columns. All other columns are optional and can be mapped in the app.
 
-The optional `Itinerary` table has one row per day: `Date` (required), `Day Title`, `Overnight city`, `Accommodation`, `Travel`, `Activities` (links to the activity table), `Notes`, and `Overnight Latitude`/`Overnight Longitude` (used to draw the trip on the map). Columns are mapped by field ID too (**Settings → Field mapping → Itinerary**).
+The optional `Itinerary` table has one row per day: `Date` (required), `Day Title`, `Overnight city`, `Accommodation`, `Travel`, `Activities` (links to the activity table), `Notes`, and `Overnight location coordinates` (for travel routing).
 
 ## Deployment options
 
@@ -46,7 +46,7 @@ In proxy mode the server provides a public `/config.json` containing the base ID
 ### 1. Local
 
 ```bash
-cp .env.example .env   # then fill in AIRTABLE_API_KEY
+cp .env.example .env   # then fill in AIRTABLE_API_KEY and AIRTABLE_BASE_ID
 npm install
 npm run dev            # http://localhost:5173
 ```
@@ -58,8 +58,8 @@ npm run dev            # http://localhost:5173
 **Dockhand ("stack from Git")**: point the stack at this repository and the `docker-compose.yml` at its root. Then set these stack environment variables:
 
 ```
-AIRTABLE_API_KEY=pat...
-AIRTABLE_BASE_ID=appYOMAihqLlbtMdd   # optional, this is the default
+AIRTABLE_API_KEY=pat_...your_token...
+AIRTABLE_BASE_ID=app...your_base_id...
 AIRTABLE_TABLE=Activities            # optional
 OREAS_PORT=8080                      # optional host port
 ```
@@ -67,15 +67,15 @@ OREAS_PORT=8080                      # optional host port
 **Plain Docker Compose**:
 
 ```bash
-cp .env.example .env   # fill in the key
+cp .env.example .env   # fill in the key and base ID
 docker compose up -d --build
 ```
 
-The app is served at `http://<pi>:8080`. The proxy accepts only `GET` requests plus `PATCH` of a single record (ratings), and the key exists only in the container's nginx config, never in the web root.
+The app is served at `http://<pi>:8080`. The proxy accepts only `GET` requests plus `PATCH` of a single record (ratings), and the key exists only in the container's nginx config, never in the web bundle.
 
 ### 3. GitHub Pages
 
-The workflow `.github/workflows/pages.yml` builds and deploys the app. It is currently manual-only (**Actions → Deploy to GitHub Pages → Run workflow**); add a `push` trigger to deploy on every push to `main`. One-time setup: go to **Settings → Pages → Source** and choose **GitHub Actions** (private repos need a paid plan for Pages). No secrets are involved. Open the page, enter the base ID and token in Settings, and they are saved in your browser only.
+The workflow `.github/workflows/pages.yml` builds and deploys the app. It is currently manual-only (**Actions → Deploy to GitHub Pages → Run workflow**); add a `push` trigger to deploy on every push.
 
 ## Development
 
@@ -107,4 +107,4 @@ public/                      favicon, app icons, web app manifest
 docker/                      nginx proxy template + runtime config.json script
 ```
 
-Note: Airtable image links expire after about 2 h. Stored images are keyed by their stable attachment ID, so they keep working. If an image that was never stored fails to load in an older cache, Oreas offers a **Refresh** that runs a sync.
+Note: Airtable image links expire after about 2 h. Stored images are keyed by their stable attachment ID, so they keep working. If an image that was never stored fails to load in an older cache, the app shows a placeholder and suggests re-syncing.
