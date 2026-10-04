@@ -8,17 +8,15 @@
   const local = loadLocalSettings();
   const proxy = app.config?.mode === 'proxy';
   let baseId = $state(local.baseId ?? app.config?.baseId ?? '');
-  let table = $state(local.table ?? app.config?.table ?? 'Activities');
   let apiKey = $state(local.apiKey ?? '');
 
   const validBase = $derived(/^app[A-Za-z0-9]{14}$/.test(baseId.trim()));
-  const canSave = $derived(validBase && table.trim() && (proxy || apiKey.trim()));
+  const canSave = $derived(validBase && (proxy || apiKey.trim()));
 
   function save() {
     // In proxy mode only store overrides that differ from the server config.
     app.saveSettings({
       baseId: proxy && baseId.trim() === app.server?.baseId ? undefined : baseId,
-      table: proxy && table.trim() === app.server?.table ? undefined : table,
       apiKey: proxy ? undefined : apiKey,
     });
     app.showSettings = false;
@@ -43,8 +41,9 @@
         <KeyRound class="mt-0.5 size-5 shrink-0 text-violet-500" />
         <div>
           Create a <a class="text-violet-600 underline dark:text-violet-400" href="https://airtable.com/create/tokens" target="_blank" rel="noopener noreferrer">personal access token</a>
-          with scopes <code class="text-xs">data.records:read</code>, <code class="text-xs">schema.bases:read</code> and (for ratings)
-          <code class="text-xs">data.records:write</code>, limited to your trip base.
+          with scopes <code class="text-xs">data.records:read</code>, <code class="text-xs">schema.bases:read</code>,
+          <code class="text-xs">data.records:write</code> (ratings) and <code class="text-xs">schema.bases:write</code> (creating
+          missing tables/columns), limited to your trip base.
           It is stored only in this browser's localStorage.
         </div>
       </div>
@@ -57,10 +56,10 @@
       <span class="text-muted block text-xs">From the Airtable URL: airtable.com/<b>app…</b>/tbl…</span>
     </label>
 
-    <label class="block space-y-1">
-      <span class="text-sm font-medium">Table (name or ID)</span>
-      <input class={input} bind:value={table} placeholder="Activities" spellcheck="false" />
-    </label>
+    <p class="text-muted text-xs">
+      Oreas looks for the tables <b>Activities</b> and <b>Itinerary</b> in this base. If yours are named differently, pick them
+      under <b>Field mapping</b> after the first sync.
+    </p>
 
     {#if !proxy}
       <label class="block space-y-1">

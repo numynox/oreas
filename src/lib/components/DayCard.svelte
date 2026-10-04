@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { BedDouble, MapPinOff, StickyNote, TrainFront } from '@lucide/svelte';
+  import { BedDouble, Camera, ChevronRight, MapPinOff, StickyNote } from '@lucide/svelte';
+  import { slide } from 'svelte/transition';
   import { app } from '../state.svelte';
   import { formatDay, type Day } from '../airtable/itinerary';
   import { formatDuration } from '../airtable/activities';
   import Img from './Img.svelte';
   import TypeIcon from './TypeIcon.svelte';
+  import TravelInfo from './TravelInfo.svelte';
 
   let { day, number }: { day: Day; number: number } = $props();
 
@@ -12,9 +14,18 @@
   const active = $derived(app.activeDayId === day.id);
   const acts = $derived(day.activityIds.map((id) => app.activities.find((a) => a.id === id)).filter((a) => !!a));
   const missing = $derived(day.activityIds.length - acts.length);
+
+  /** Collapsible text sections (collapsed by default). */
+  const sections = $derived(
+    [
+      { key: 'notes', label: 'Notes', icon: StickyNote, text: day.notes },
+      { key: 'photos', label: 'Photo spots', icon: Camera, text: day.photoSpots },
+    ].filter((x) => x.text),
+  );
+  let open = $state<Record<string, boolean>>({});
 </script>
 
-<!-- Compact day row: date column + header line (title, travel, overnight) + activity grid + one-line notes. -->
+<!-- Compact day row: date column + header line (title, travel, overnight) + activity grid + collapsible notes / photo spots. -->
 <div
   data-day={day.id}
   role="button"
@@ -22,8 +33,8 @@
   class="flex scroll-mt-3 gap-3 rounded-2xl border px-2.5 py-2 transition {active
     ? 'border-violet-400/60 bg-white/55 shadow-lg shadow-violet-500/10 dark:bg-white/8'
     : 'border-transparent hover:bg-white/35 dark:hover:bg-white/5'}"
-  onclick={() => (app.activeDayId = day.id)}
-  onkeydown={(e) => e.key === 'Enter' && (app.activeDayId = day.id)}
+  onclick={() => app.selectDay(active ? null : day.id)}
+  onkeydown={(e) => e.key === 'Enter' && app.selectDay(active ? null : day.id)}
 >
   <div
     class="flex w-12 shrink-0 flex-col items-center justify-center self-start rounded-xl py-1 text-white shadow-sm transition {active
@@ -43,14 +54,7 @@
         <span class="text-muted shrink-0 font-semibold">No date</span>
       {/if}
       {#if day.title}<span class="text-muted min-w-0 truncate font-medium">{day.title}</span>{/if}
-      {#if day.travel}
-        <span
-          class="flex min-w-0 shrink items-center gap-1 truncate rounded-full bg-sky-500/12 px-2 py-0.5 text-xs text-sky-900 dark:text-sky-200"
-          title={day.travel}
-        >
-          <TrainFront class="size-3 shrink-0" /><span class="truncate">{day.travel}</span>
-        </span>
-      {/if}
+      <TravelInfo travel={day.travel} details={day.travelDetails} />
       {#if day.city || day.accommodation}
         <span class="ml-auto flex max-w-[45%] shrink-0 items-center gap-1 text-xs" title={[day.city, day.accommodation].filter(Boolean).join(' · ')}>
           <BedDouble class="size-3.5 shrink-0 text-violet-500" />
@@ -102,11 +106,28 @@
       </ul>
     {/if}
 
-    {#if day.notes}
-      <div class="text-muted flex items-start gap-1.5 text-xs" title={active ? undefined : day.notes}>
-        <StickyNote class="mt-px size-3.5 shrink-0" />
-        <p class="leading-snug whitespace-pre-line {active ? '' : 'line-clamp-1'}">{day.notes}</p>
+    {#each sections as sec (sec.key)}
+      <div>
+        <button
+          class="text-muted flex w-full min-w-0 items-center gap-1.5 rounded-lg py-0.5 text-left text-xs transition hover:text-[var(--text)]"
+          aria-expanded={!!open[sec.key]}
+          onclick={(e) => {
+            e.stopPropagation();
+            open[sec.key] = !open[sec.key];
+          }}
+        >
+          <ChevronRight class="size-3.5 shrink-0 transition-transform {open[sec.key] ? 'rotate-90' : ''}" />
+          <sec.icon class="size-3.5 shrink-0" />
+          <span class="shrink-0 font-semibold">{sec.label}</span>
+          {#if !open[sec.key]}<span class="min-w-0 truncate opacity-80">{sec.text}</span>{/if}
+        </button>
+        {#if open[sec.key]}
+          <p
+            class="mt-1 ml-5 rounded-xl bg-white/30 px-3 py-2 text-[13px] leading-relaxed whitespace-pre-line dark:bg-white/5"
+            transition:slide={{ duration: 180 }}
+          >{sec.text}</p>
+        {/if}
       </div>
-    {/if}
+    {/each}
   </div>
 </div>

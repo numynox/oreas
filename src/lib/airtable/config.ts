@@ -11,19 +11,17 @@ export type Mode = 'proxy' | 'direct';
 export interface ServerConfig {
   mode: 'proxy';
   baseId: string;
-  table: string;
 }
 
 export interface LocalSettings {
   baseId?: string;
-  table?: string;
   apiKey?: string;
 }
 
+/** Tables are not configured here: both are found by default name, then remembered by ID (see Field mapping). */
 export interface AppConfig {
   mode: Mode;
   baseId: string;
-  table: string;
   apiKey?: string;
 }
 
@@ -35,7 +33,7 @@ export async function loadServerConfig(): Promise<ServerConfig | null> {
     if (!res.ok) return null;
     const data = (await res.json()) as Partial<ServerConfig>;
     if (data?.mode !== 'proxy') return null;
-    return { mode: 'proxy', baseId: data.baseId ?? '', table: data.table || 'Activities' };
+    return { mode: 'proxy', baseId: data.baseId ?? '' };
   } catch {
     // Missing file or SPA fallback returning HTML → direct mode.
     return null;
@@ -54,7 +52,6 @@ export function saveLocalSettings(s: LocalSettings): void {
   try {
     const clean: LocalSettings = {};
     if (s.baseId?.trim()) clean.baseId = s.baseId.trim();
-    if (s.table?.trim()) clean.table = s.table.trim();
     if (s.apiKey?.trim()) clean.apiKey = s.apiKey.trim();
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(clean));
   } catch {
@@ -67,13 +64,11 @@ export function buildConfig(server: ServerConfig | null, local: LocalSettings): 
     return {
       mode: 'proxy',
       baseId: local.baseId || server.baseId,
-      table: local.table || server.table,
     };
   }
   return {
     mode: 'direct',
     baseId: local.baseId ?? '',
-    table: local.table || 'Activities',
     apiKey: local.apiKey,
   };
 }

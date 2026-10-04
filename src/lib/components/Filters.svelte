@@ -3,7 +3,7 @@
   import { slide } from 'svelte/transition';
   import { FACETS, app } from '../state.svelte';
 
-  let open = $state(true);
+  let open = $state(false);
   const LIMIT = 6;
   let expanded = $state<Record<string, boolean>>({});
   const visible = $derived(FACETS.filter((f) => app.resolved?.fields[f.key] && app.facets[f.key]?.length));
@@ -57,7 +57,8 @@
   {#if open}
     <div class="space-y-2.5" transition:slide={{ duration: 180 }}>
       {#each visible as facet (facet.key)}
-        {@const all = app.facets[facet.key]}
+        <!-- Options without matches stay visible (dimmed) but move to the end. -->
+        {@const all = [...app.facets[facet.key].filter((o) => o.count > 0), ...app.facets[facet.key].filter((o) => o.count === 0)]}
         {@const shown = expanded[facet.key] ? all : all.filter((o, i) => i < LIMIT || app.selected[facet.key].includes(o.value))}
         <div>
           <div class="text-muted mb-1 text-[11px] font-medium">{facet.label}</div>

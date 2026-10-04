@@ -8,8 +8,13 @@ export interface Day {
   title?: string;
   city?: string;
   accommodation?: string;
+  /** Short travel label, e.g. "Kanazawa -> Himeji -> Hiroshima". */
   travel?: string;
+  /** Long travel description (connections, durations), shown in a popup. */
+  travelDetails?: string;
   notes?: string;
+  /** Photography highlights for the day (spots, best light/timing). */
+  photoSpots?: string;
   /** Linked activity record IDs, in Airtable order. */
   activityIds: string[];
   lat?: number;
@@ -46,7 +51,9 @@ export function toDay(rec: AirtableRecord, r: ResolvedMapping<DayKey>): Day {
     city: str(get('city')),
     accommodation: str(get('accommodation')),
     travel: str(get('travel')),
+    travelDetails: str(get('travelDetails')),
     notes: str(get('notes')),
+    photoSpots: str(get('photoSpots')),
     activityIds: Array.isArray(links) ? links.map((l) => (typeof l === 'string' ? l : (l as { id: string }).id)) : [],
     lat: ok ? lat : undefined,
     lng: ok ? lng : undefined,
@@ -55,7 +62,7 @@ export function toDay(rec: AirtableRecord, r: ResolvedMapping<DayKey>): Day {
 
 /** A day is "empty" if nothing but the record exists (e.g. a blank row). */
 export function isEmptyDay(d: Day): boolean {
-  return !d.date && !d.title && !d.city && !d.travel && !d.notes && !d.activityIds.length;
+  return !d.date && !d.title && !d.city && !d.travel && !d.travelDetails && !d.notes && !d.photoSpots && !d.activityIds.length;
 }
 
 /** Scroll the itinerary list (the day's scroll container) so the day card is at the top. */
@@ -63,7 +70,7 @@ export function scrollToDay(dayId: string, smooth = true) {
   const el = document.querySelector<HTMLElement>(`[data-day="${dayId}"]`);
   const scroller = el?.closest<HTMLElement>('.overflow-y-auto');
   if (!el || !scroller) return;
-  const top = scroller.scrollTop + el.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 12;
+  const top = scroller.scrollTop + el.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 8;
   scroller.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
 }
 

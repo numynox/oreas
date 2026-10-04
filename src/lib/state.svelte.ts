@@ -1,3 +1,4 @@
+import { tick } from 'svelte';
 import { AirtableError, fetchAllRecords, fetchSchema, updateRecord } from './airtable/client';
 import { IMAGE_URL_TTL_MS, MAX_AGE_MS, clearAllCaches, loadCache, saveCache, type CacheEntry } from './airtable/cache';
 import {
@@ -12,6 +13,7 @@ import {
 } from './airtable/config';
 import {
   DAY_FIELD_DEFS,
+  TABLE_NAMES,
   loadMapping,
   resolveMapping,
   resolveTable,
@@ -55,8 +57,6 @@ export interface Toast {
 export type Theme = 'system' | 'light' | 'dark';
 
 const INACTIVE = /skip|deprecat|cancel/i;
-/** Default name of the itinerary table (resolved by ID once found, so renames are fine). */
-export const ITINERARY_TABLE = 'Itinerary';
 
 export type Mode = 'explore' | 'itinerary';
 const modeFromHash = (): Mode => (typeof location !== 'undefined' && location.hash === '#itinerary' ? 'itinerary' : 'explore');
@@ -125,10 +125,8 @@ class AppState {
   itineraryMapping = $state<StoredMapping<DayKey>>({ fields: {} });
   /** Which part of the app is shown: activity explorer or day-by-day itinerary. */
   mode = $state<Mode>(modeFromHash());
-  /** Day highlighted in the itinerary (scroll position / click). */
+  /** Day selected in the itinerary (null = whole trip). */
   activeDayId = $state<string | null>(null);
-  /** Scroll-spy pauses until this timestamp after a programmatic jump. */
-  spyPausedUntil = 0;
   syncing = $state(false);
   imagesExpired = $state(false);
   online = $state(typeof navigator === 'undefined' ? true : navigator.onLine);
@@ -141,12 +139,12 @@ class AppState {
 
   resolved = $derived.by(() => {
     if (!this.cache || !this.config) return null;
-    return resolveMapping(this.cache.schema, this.config.table, this.mapping);
+    return resolveMapping(this.cache.schema, TABLE_NAMES.activities, this.mapping);
   });
 
   resolvedDays = $derived.by(() => {
     if (!this.cache) return null;
-    return resolveMapping(this.cache.schema, ITINERARY_TABLE, this.itineraryMapping, DAY_FIELD_DEFS);
+    return resolveMapping(this.cache.schema, TABLE_NAMES.itinerary, this.itineraryMapping, DAY_FIELD_DEFS);
   });
 
   /** Itinerary days sorted by date (undated days last). Blank rows are ignored. */
@@ -357,11 +355,11 @@ class AppState {
     this.syncing = true;
     try {
       const schema = await fetchSchema(cfg);
-      const table = resolveTable(schema, cfg.table, this.mapping.tableId);
+      const table = resolveTable(schema, TABLE_NAMES.activities, this.mapping.tableId);
       if (!table) {
         this.cache = { fetchedAt: Date.now(), schema, tableId: '', records: [] };
         this.showMapping = true;
-        this.toast('error', `Table "${cfg.table}" not found – pick the table in Field mapping.`);
+        this.toast('error', `Table "${TABLE_NAMES.activities}" not found – pick the activities table in Field mapping.`);
         return;
       }
       await this.flushWrites();
@@ -373,7 +371,7 @@ class AppState {
       }
       const entry: CacheEntry = { fetchedAt: Date.now(), schema, tableId: table.id, records };
       // The itinerary table is optional – failures here must not break the activity sync.
-      const dayTable = resolveTable(schema, ITINERARY_TABLE, this.itineraryMapping.tableId);
+      const dayTable = resolveTable(schema, TABLE_NAMES.itinerary, this.itineraryMapping.tableId);
       if (dayTable && dayTable.id !== table.id) {
         try {
           entry.itinerary = { tableId: dayTable.id, records: await fetchAllRecords(cfg, dayTable.id) };
@@ -603,6 +601,23 @@ class AppState {
     return d.date && first ? daysBetween(first, d.date) + 1 : this.days.indexOf(d) + 1;
   }
 
+  /** Select a day (null = whole trip). Closes any open activity so the map can frame the day. */
+  selectDay(dayId: string | null, scroll = false) {
+    this.selectedId = null;
+    this.activeDayId = dayId;
+    // Scroll after the DOM has updated: selecting a day changes the card heights above it.
+    if (dayId && scroll) void tick().then(() => scrollToDay(dayId));
+  }
+
+  /** Step to the previous/next day (from none: first/last day). */
+  stepDay(dir: 1 | -1) {
+    const days = this.days;
+    if (!days.length) return;
+    const i = days.findIndex((d) => d.id === this.activeDayId);
+    const next = i < 0 ? (dir === 1 ? 0 : days.length - 1) : Math.max(0, Math.min(days.length - 1, i + dir));
+    this.selectDay(days[next].id, true);
+  }
+
   setMode(m: Mode) {
     this.mode = m;
     const hash = m === 'itinerary' ? '#itinerary' : '';
@@ -612,8 +627,8 @@ class AppState {
   /** Jump from an activity to its day in the itinerary. */
   showDay(dayId: string) {
     this.setMode('itinerary');
+    this.selectedId = null;
     this.activeDayId = dayId;
-    this.spyPausedUntil = Date.now() + 1500;
     // Wait for the itinerary to render before scrolling.
     setTimeout(() => scrollToDay(dayId), 50);
   }

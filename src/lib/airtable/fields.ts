@@ -27,9 +27,26 @@ export type FieldKey =
   | 'attachments';
 
 /** Logical fields of the (optional) itinerary table. */
-export type DayKey = 'date' | 'title' | 'city' | 'travel' | 'activities' | 'notes' | 'accommodation' | 'lat' | 'lng';
+export type DayKey =
+  | 'date'
+  | 'title'
+  | 'city'
+  | 'travel'
+  | 'travelDetails'
+  | 'activities'
+  | 'notes'
+  | 'photoSpots'
+  | 'accommodation'
+  | 'lat'
+  | 'lng';
 
 export type MappingKind = 'activities' | 'itinerary';
+
+/**
+ * Default table names, used only to find each table the first time. After that the table is
+ * remembered by its ID (rename-safe) and can be switched per table in the Field mapping dialog.
+ */
+export const TABLE_NAMES: Record<MappingKind, string> = { activities: 'Activities', itinerary: 'Itinerary' };
 
 export interface FieldDef<K extends string = FieldKey> {
   key: K;
@@ -67,9 +84,11 @@ export const DAY_FIELD_DEFS: FieldDef<DayKey>[] = [
   { key: 'title', label: 'Day title', defaultName: 'Day Title', required: false, types: TEXT },
   { key: 'city', label: 'Overnight city', defaultName: 'Overnight city', required: false, types: [...TEXT, 'singleSelect'] },
   { key: 'accommodation', label: 'Accommodation', defaultName: 'Accommodation', required: false, types: TEXT },
-  { key: 'travel', label: 'Travel', defaultName: 'Travel', required: false, types: TEXT },
+  { key: 'travel', label: 'Travel (short label)', defaultName: 'Travel', required: false, types: TEXT },
+  { key: 'travelDetails', label: 'Travel details', defaultName: 'Travel details', required: false, types: TEXT },
   { key: 'activities', label: 'Activities (links)', defaultName: 'Activities', required: false, types: ['multipleRecordLinks'] },
   { key: 'notes', label: 'Notes', defaultName: 'Notes', required: false, types: ['multilineText', 'richText', 'singleLineText'] },
+  { key: 'photoSpots', label: 'Photo spots', defaultName: 'Photo spots', required: false, types: ['multilineText', 'richText', 'singleLineText'] },
   { key: 'lat', label: 'Overnight latitude', defaultName: 'Overnight Latitude', required: false, types: ['number'] },
   { key: 'lng', label: 'Overnight longitude', defaultName: 'Overnight Longitude', required: false, types: ['number'] },
 ];
@@ -91,8 +110,10 @@ const ITINERARY_SEEDS: Record<string, StoredMapping<DayKey>> = {
       title: 'fldF5ZGnmh4xGxj2A',
       city: 'fldMDHzbZxDxlNnuc',
       travel: 'fldL3S5EAIbKKQPGr',
+      travelDetails: 'fld2AmxdTYeTzPpaO',
       activities: 'fldBBFp4HzLqzpbJG',
       notes: 'fldj0MjMOE3YqfUIt',
+      photoSpots: 'fldmAffjIRdZzafQ9',
       accommodation: 'fldT54hTNmgUJm9th',
       lat: 'fld4Up4If3PuQhMBC',
       lng: 'fldP59286PozlQoJQ',

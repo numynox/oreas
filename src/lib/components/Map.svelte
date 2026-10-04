@@ -283,9 +283,23 @@
     }
   }
 
+  type Pad = { top: number; right: number; bottom: number; left: number };
+  /**
+   * MapLibre silently ignores fitBounds/flyTo when the padding leaves no room on the canvas
+   * (wide itinerary panel + detail drawer on smaller screens). Scale the padding down so that
+   * at least 120 px of map remain visible in each direction.
+   */
+  function safePadding(p: Pad): Pad {
+    if (!map) return p;
+    const { clientWidth: w, clientHeight: h } = map.getContainer();
+    const sx = Math.min(1, Math.max(0, w - 120) / Math.max(1, p.left + p.right));
+    const sy = Math.min(1, Math.max(0, h - 120) / Math.max(1, p.top + p.bottom));
+    return { left: p.left * sx, right: p.right * sx, top: p.top * sy, bottom: p.bottom * sy };
+  }
+
   function fitBounds(b: maplibregl.LngLatBounds, maxZoom: number, animate: boolean) {
     if (!map || b.isEmpty()) return;
-    const pad = { top: padding.top + 60, right: padding.right + 60, bottom: padding.bottom + 60, left: padding.left + 60 };
+    const pad = safePadding({ top: padding.top + 60, right: padding.right + 60, bottom: padding.bottom + 60, left: padding.left + 60 });
     map.fitBounds(b, { padding: pad, maxZoom, duration: animate ? 900 : 0 });
   }
 
@@ -466,7 +480,7 @@
         map!.flyTo({
           center: [a.lng!, a.lat!],
           zoom: Math.max(map!.getZoom(), app.mode === 'itinerary' ? 11 : 12),
-          padding,
+          padding: safePadding(padding),
           speed: 1.4,
           essential: true,
         }),

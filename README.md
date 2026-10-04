@@ -8,28 +8,28 @@ Everything it uses is free: [Svelte 5](https://svelte.dev), [Vite](https://vite.
 
 - **Map**: markers that you can color by type, status, region, priority or access. Nearby markers simply overlap (no clustering) and shrink when zoomed out. Hover a marker for a preview with a photo.
 - **Map styles**: Streets (follows the light/dark theme), Minimal, **Terrain** (hillshade and 3D relief from AWS Terrain Tiles; starts flat, tilt with right-drag or a two-finger drag), Topographic, Satellite, Railway (OSM Railway overlay) and More.
-- **Filters and search**: filter chips for type, status, region, priority and access (public transport / car). Search covers name, location and notes. Skipped and deprecated activities are hidden by default.
+- **Filters and search**: filter chips for type, status, region, priority and access (public transport / car), collapsed by default; options without matches are dimmed and listed last. Search covers name, location and notes. Skipped and deprecated activities are hidden by default.
 - **Rate mode**: the **Rate** button walks through every active activity without a rating (in a geographic tour), zooms to it and shows its details with the choices Low, Medium, High and Must have. Ratings are saved to Airtable.
-- **Itinerary**: switch between **Explore** and **Itinerary** at the top of the panel (bookmarkable as `#itinerary`). The itinerary lists the trip day by day from the `Itinerary` table: date, day title, overnight city and accommodation, travel legs between days, and linked activities (from the activity table). The cost shown includes activity costs + travel + accommodation for each day.
+- **Itinerary**: switch between **Explore** and **Itinerary** at the top of the panel (bookmarkable as `#itinerary`). The itinerary lists the trip day by day from the `Itinerary` table: date, day title, overnight city and accommodation, the travel leg (short label; the full travel details open in a popup), and the linked activities. Notes and photo spots are collapsed per day and expand on click. The overview on top (date range and all overnight stops) stays in place while the day list scrolls. Select a day by clicking it, with the overnight-stop chips, or step through the days with ↑/↓ (Esc shows the whole trip). The map then frames all of that day's activities plus last night's and tonight's stop, and draws the trip line through all overnight stops.
 - **Details**: an image carousel with a fullscreen lightbox, duration, cost, booking flag, notes, the website and a Google Maps link.
 - **Unplaced activities**: records without Latitude/Longitude still appear in the list with an "Unplaced" badge.
 - **Offline-friendly cache**: data is stored in `localStorage`. It syncs automatically when the cache is more than 24 h old, or when you press sync.
 - **Offline images**: after each sync, the large thumbnail of every image is saved to IndexedDB in the background. Full-size images are saved when you first open them in the fullscreen viewer, or when you download them in Settings.
 - **Offline app and map**: a service worker (production build only) caches the app itself, so Oreas starts without a connection. Every map area you look at is cached as you go. **Settings → Download map** lets you select and download a region in advance.
 - **Installable**: a web app manifest lets you add Oreas to the home screen or install it as an app (Chrome, Edge, Safari, Firefox on Android). Downloads ask the browser to make storage persistent.
-- **Robust to column renames**: columns are referenced by Airtable field ID, so renaming a column changes nothing. If a column is deleted, Oreas asks you to pick a replacement in **Settings → Field mapping**.
+- **Robust to column renames**: columns are referenced by Airtable field ID, so renaming a column changes nothing. If a column is deleted, Oreas asks you to pick a replacement in **Settings → Field mapping**. There, **Create missing tables and columns** creates any missing table (with all its columns) or the columns left on *Select a column…* in an existing table; choose *— none —* for columns you don't want.
 - Light and dark themes, plus a mobile bottom-sheet layout.
 
 ## Airtable token
 
 Create a [personal access token](https://airtable.com/create/tokens) with:
 
-- scopes `data.records:read`, `schema.bases:read` and `data.records:write` (only needed for ratings)
+- scopes `data.records:read`, `schema.bases:read`, `data.records:write` (only needed for ratings) and `schema.bases:write` (only needed for **Create missing tables and columns**)
 - access limited to your trip base
 
-The base needs a table (default `Activities`) with at least a name column and `Latitude`/`Longitude` number columns. All other columns are optional and can be mapped in the app.
+The base needs a table named `Activities` with at least a name column and `Latitude`/`Longitude` number columns. All other columns are optional and can be mapped in the app. Both tables (`Activities` and `Itinerary`) are found by these default names on the first sync and then remembered by ID, so renaming them is fine; if yours are named differently, pick them in **Settings → Field mapping**.
 
-The optional `Itinerary` table has one row per day: `Date` (required), `Day Title`, `Overnight city`, `Accommodation`, `Travel`, `Activities` (links to the activity table), `Notes`, and `Overnight location coordinates` (for travel routing).
+The optional `Itinerary` table has one row per day: `Date` (required), `Day Title`, `Overnight city`, `Accommodation`, `Travel` (short label), `Travel details` (shown in a popup), `Activities` (links to the activity table), `Notes`, `Photo spots`, and `Overnight Latitude` / `Overnight Longitude` (place the stop on the map and draw the trip line).
 
 ## Deployment options
 
@@ -38,10 +38,10 @@ The API key is never shipped in the JavaScript bundle.
 | | Where the key lives | How the browser reaches Airtable |
 |---|---|---|
 | Local dev | `.env` (git-ignored) | Vite dev proxy `/api/airtable` adds the key on the server |
-| Raspberry Pi (Docker) | Stack environment / `.env` | nginx proxy `/api/airtable` (GET + single-record PATCH) adds the key on the server |
+| Raspberry Pi (Docker) | Stack environment / `.env` | nginx proxy `/api/airtable` (GET, single-record PATCH, creating tables/fields) adds the key on the server |
 | GitHub Pages | Entered in **Settings** and kept in that browser's `localStorage` | Directly to `api.airtable.com` |
 
-In proxy mode the server provides a public `/config.json` containing the base ID and table name, but never the key. If that file is missing, as on GitHub Pages, the app switches to direct mode.
+In proxy mode the server provides a public `/config.json` containing the base ID, but never the key. If that file is missing, as on GitHub Pages, the app switches to direct mode.
 
 ### 1. Local
 
@@ -60,7 +60,6 @@ npm run dev            # http://localhost:5173
 ```
 AIRTABLE_API_KEY=pat_...your_token...
 AIRTABLE_BASE_ID=app...your_base_id...
-AIRTABLE_TABLE=Activities            # optional
 OREAS_PORT=8080                      # optional host port
 ```
 
@@ -71,7 +70,7 @@ cp .env.example .env   # fill in the key and base ID
 docker compose up -d --build
 ```
 
-The app is served at `http://<pi>:8080`. The proxy accepts only `GET` requests plus `PATCH` of a single record (ratings), and the key exists only in the container's nginx config, never in the web bundle.
+The app is served at `http://<pi>:8080`. The proxy accepts only `GET` requests, `PATCH` of a single record (ratings) and `POST` to create tables or fields (field mapping), and the key exists only in the container's nginx config, never in the web bundle.
 
 ### 3. GitHub Pages
 

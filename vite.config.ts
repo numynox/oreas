@@ -5,8 +5,10 @@ import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
 
-/** Writes are only allowed as PATCH of a single record (used for ratings). */
+/** Writes allowed through the proxy: PATCH of a single record (ratings) … */
 const RECORD_PATCH = /^\/api\/airtable\/v0\/app[A-Za-z0-9]+\/[A-Za-z0-9]+\/rec[A-Za-z0-9]+(\?.*)?$/;
+/** … and creating tables / fields ("Create missing tables and columns"). */
+const SCHEMA_POST = /^\/api\/airtable\/v0\/meta\/bases\/app[A-Za-z0-9]+\/tables(\/tbl[A-Za-z0-9]+\/fields)?$/;
 
 /**
  * Dev-only plugin: serves /config.json (proxy mode, no key) and limits the Airtable
@@ -19,7 +21,11 @@ function oreasDevServer(env: Record<string, string>): Plugin {
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const url = req.url ?? '';
-        const allowed = req.method === 'GET' || req.method === 'HEAD' || (req.method === 'PATCH' && RECORD_PATCH.test(url));
+        const allowed =
+          req.method === 'GET' ||
+          req.method === 'HEAD' ||
+          (req.method === 'PATCH' && RECORD_PATCH.test(url)) ||
+          (req.method === 'POST' && SCHEMA_POST.test(url));
         if (url.startsWith('/api/airtable') && !allowed) {
           res.statusCode = 405;
           res.end('Method Not Allowed');
@@ -37,7 +43,6 @@ function oreasDevServer(env: Record<string, string>): Plugin {
             JSON.stringify({
               mode: 'proxy',
               baseId: env.AIRTABLE_BASE_ID ?? '',
-              table: env.AIRTABLE_TABLE ?? 'Activities',
             }),
           );
           return;

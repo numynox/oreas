@@ -1,8 +1,11 @@
-# Allowed Airtable proxy calls: reads, plus PATCH of a single record (ratings).
+# Allowed Airtable proxy calls: reads, PATCH of a single record (ratings), and creating
+# tables / fields ("Create missing tables and columns").
 map "$request_method:$uri" $oreas_airtable_allowed {
     default 0;
     "~^(GET|HEAD):" 1;
     "~^PATCH:/api/airtable/v0/app[A-Za-z0-9]+/[A-Za-z0-9]+/rec[A-Za-z0-9]+$" 1;
+    "~^POST:/api/airtable/v0/meta/bases/app[A-Za-z0-9]+/tables$" 1;
+    "~^POST:/api/airtable/v0/meta/bases/app[A-Za-z0-9]+/tables/tbl[A-Za-z0-9]+/fields$" 1;
 }
 
 server {

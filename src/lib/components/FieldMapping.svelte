@@ -1,51 +1,91 @@
 <script lang="ts">
-  import { CircleAlert, Check } from '@lucide/svelte';
-  import { ITINERARY_TABLE, app } from '../state.svelte';
-  import { DEFS, compatibleFields, resolveMapping, type FieldDef, type MappingKind } from '../airtable/fields';
+  import { CircleAlert, Check, LoaderCircle, Plus } from '@lucide/svelte';
+  import { app } from '../state.svelte';
+  import { DEFS, TABLE_NAMES, compatibleFields, resolveMapping, type FieldDef, type MappingKind } from '../airtable/fields';
+  import { NONE, describe, execute, plan, type Draft, type Drafts } from '../airtable/create';
   import Modal from './Modal.svelte';
 
-  const schema = app.cache?.schema;
+  // Reactive, so newly created tables/columns appear in the dropdowns after the re-sync.
+  const schema = $derived(app.cache?.schema);
   let kind = $state<MappingKind>(app.mode === 'itinerary' && !app.resolved?.blocking ? 'itinerary' : 'activities');
 
-  // One draft per table kind, initialised from the current resolution.
-  function initial(k: MappingKind) {
+  /**
+   * Draft values per column: a field ID, '' ("Select a column…" = missing, can be created) or NONE (not used).
+   * Columns that were intentionally unmapped before start as NONE, unresolved ones as ''.
+   */
+  function initial(k: MappingKind): Draft {
     const r = k === 'activities' ? app.resolved : app.resolvedDays;
-    const defs = DEFS[k] as FieldDef<string>[];
+    const stored = (k === 'activities' ? app.mapping : app.itineraryMapping).fields as Record<string, string | null | undefined>;
     const fields = (r?.fields ?? {}) as Record<string, { id: string } | undefined>;
     return {
       tableId: r?.table?.id ?? '',
-      fields: Object.fromEntries(defs.map((d) => [d.key, fields[d.key]?.id ?? ''])) as Record<string, string>,
-      unresolved: new Set((r?.unresolved ?? []).map((d) => d.key as string)),
-      missingTable: !r?.table,
-      unresolvedNames: (r?.unresolved ?? []).map((d) => d.defaultName),
+      fields: Object.fromEntries((DEFS[k] as FieldDef<string>[]).map((d) => [d.key, fields[d.key]?.id ?? (stored[d.key] === null ? NONE : '')])),
     };
   }
-  let drafts = $state({ activities: initial('activities'), itinerary: initial('itinerary') });
+  let drafts = $state<Drafts>({ activities: initial('activities'), itinerary: initial('itinerary') });
+  const meta = {
+    activities: { missingTable: !app.resolved?.table, unresolved: (app.resolved?.unresolved ?? []).map((d) => d.defaultName) },
+    itinerary: { missingTable: !app.resolvedDays?.table, unresolved: (app.resolvedDays?.unresolved ?? []).map((d) => d.defaultName) },
+  };
+
   const draft = $derived(drafts[kind]);
   const defs = $derived(DEFS[kind] as FieldDef<string>[]);
   const table = $derived(schema?.tables.find((t) => t.id === draft.tableId));
 
   function onTableChange(id: string) {
-    if (!schema) return;
+    drafts[kind].tableId = id;
+    if (!schema || !id || id === NONE) return;
     const r = resolveMapping(schema, id, { tableId: id, fields: {} }, defs);
     const fields = r.fields as Record<string, { id: string } | undefined>;
-    drafts[kind].tableId = id;
     drafts[kind].fields = Object.fromEntries(defs.map((d) => [d.key, fields[d.key]?.id ?? '']));
   }
 
-  const missingRequired = $derived(defs.filter((d) => d.required && !draft.fields[d.key]));
+  const isId = (v: string) => !!v && v !== NONE;
+  const missingRequired = $derived(isId(draft.tableId) ? defs.filter((d) => d.required && !isId(draft.fields[d.key])) : []);
+
+  // ---- create missing tables / columns ----
+  const todo = $derived(plan(drafts));
+  const todoText = $derived(describe(todo));
+  let creating = $state(false);
+
+  function persist(d: Drafts) {
+    const toStored = (k: MappingKind) =>
+      Object.fromEntries(
+        (DEFS[k] as FieldDef<string>[])
+          .filter((def) => d[k].fields[def.key] !== '') // '' = not chosen → resolve by name / report as missing
+          .map((def) => [def.key, d[k].fields[def.key] === NONE ? null : d[k].fields[def.key]]),
+      );
+    // Set both mappings before the (async) sync that the first call may start.
+    if (isId(d.activities.tableId)) app.setMapping({ tableId: d.activities.tableId, fields: toStored('activities') });
+    if (isId(d.itinerary.tableId)) app.setItineraryMapping({ tableId: d.itinerary.tableId, fields: toStored('itinerary') });
+  }
+
+  async function createMissing() {
+    if (!schema || !app.config) return;
+    creating = true;
+    try {
+      drafts = await execute(app.config, schema, $state.snapshot(drafts) as Drafts, todo);
+      persist(drafts);
+      await app.sync();
+      app.toast('success', 'Missing tables and columns were created in Airtable.', undefined, 4000);
+    } catch (e) {
+      app.toast('error', `Creating failed: ${e instanceof Error ? e.message : e}`, undefined, 10000);
+      void app.sync(); // pick up whatever was created before the error
+    } finally {
+      creating = false;
+    }
+  }
 
   function save() {
-    const a = drafts.activities;
-    if (a.tableId) app.setMapping({ tableId: a.tableId, fields: Object.fromEntries(DEFS.activities.map((d) => [d.key, a.fields[d.key] || null])) });
-    const i = drafts.itinerary;
-    if (i.tableId) app.setItineraryMapping({ tableId: i.tableId, fields: Object.fromEntries(DEFS.itinerary.map((d) => [d.key, i.fields[d.key] || null])) });
+    persist(drafts);
     app.showMapping = false;
   }
 
   const canSave = $derived(
-    !!drafts.activities.tableId &&
-      (['activities', 'itinerary'] as const).every((k) => !drafts[k].tableId || DEFS[k].every((d) => !d.required || drafts[k].fields[d.key])),
+    isId(drafts.activities.tableId) &&
+      (['activities', 'itinerary'] as const).every(
+        (k) => !isId(drafts[k].tableId) || DEFS[k].every((d) => !d.required || isId(drafts[k].fields[d.key])),
+      ),
   );
 
   const select =
@@ -63,26 +103,27 @@
           onclick={() => (kind = k as MappingKind)}
         >
           {label}
-          {#if drafts[k as MappingKind].unresolved.size}<span class="size-1.5 rounded-full bg-amber-500"></span>{/if}
+          {#if meta[k as MappingKind].unresolved.length}<span class="size-1.5 rounded-full bg-amber-500"></span>{/if}
         </button>
       {/each}
     </div>
 
     <p class="text-muted mb-4 text-sm">
       Oreas remembers columns by their Airtable field ID, so renaming a column in Airtable is fine. If a column was deleted or
-      replaced, pick the column to use instead. Only columns with a compatible type are listed.
+      replaced, pick the column to use instead. Only columns with a compatible type are listed. Leave a column on
+      <i>Select a column…</i> to have it created, or choose <i>— none —</i> to not use it.
     </p>
 
-    {#if draft.unresolvedNames.length || draft.missingTable}
+    {#if meta[kind].unresolved.length || meta[kind].missingTable}
       <div class="mb-4 flex gap-2 rounded-2xl bg-amber-500/12 p-3 text-sm text-amber-800 dark:text-amber-300">
         <CircleAlert class="mt-0.5 size-4 shrink-0" />
         <div>
-          {#if draft.missingTable}
+          {#if meta[kind].missingTable}
             {kind === 'activities'
-              ? `The configured table "${app.config?.table}" was not found. Pick a table below.`
-              : `No "${ITINERARY_TABLE}" table found. Pick the table holding your day-by-day plan (optional).`}
+              ? `No "${TABLE_NAMES.activities}" table found. Pick the table holding your activities, or create it below.`
+              : `No "${TABLE_NAMES.itinerary}" table found. Pick the table holding your day-by-day plan, create it below, or choose “no itinerary”.`}
           {:else}
-            Not found: <b>{draft.unresolvedNames.join(', ')}</b>. Select replacement columns or choose “none”.
+            Not found: <b>{meta[kind].unresolved.join(', ')}</b>. Select replacement columns, create them below, or choose “none”.
           {/if}
         </div>
       </div>
@@ -91,7 +132,8 @@
     <label class="mb-5 block space-y-1">
       <span class="text-sm font-medium">Table</span>
       <select class="{select} border-[var(--border)]" value={draft.tableId} onchange={(e) => onTableChange(e.currentTarget.value)}>
-        <option value="">{kind === 'activities' ? 'Select a table…' : '— no itinerary —'}</option>
+        <option value="">Select a table…</option>
+        {#if kind === 'itinerary'}<option value={NONE}>— no itinerary —</option>{/if}
         {#each schema.tables as t (t.id)}
           <option value={t.id}>{t.name}</option>
         {/each}
@@ -102,19 +144,17 @@
       <div class="grid gap-x-4 gap-y-3 sm:grid-cols-2">
         {#each defs as def (def.key)}
           {@const options = compatibleFields(def, table)}
-          {@const missing = draft.unresolved.has(def.key) && !draft.fields[def.key]}
+          {@const value = draft.fields[def.key]}
           <label class="block space-y-1">
             <span class="flex items-center gap-1.5 text-sm font-medium">
               {def.label}
               {#if def.required}<span class="text-rose-500">*</span>{/if}
-              {#if draft.fields[def.key]}<Check class="size-3.5 text-emerald-500" />{/if}
-              {#if missing}<CircleAlert class="size-3.5 text-amber-500" />{/if}
+              {#if isId(value)}<Check class="size-3.5 text-emerald-500" />{/if}
+              {#if !value}<CircleAlert class="size-3.5 text-amber-500" />{/if}
             </span>
-            <select
-              class="{select} {missing || (def.required && !draft.fields[def.key]) ? 'border-amber-500' : 'border-[var(--border)]'}"
-              bind:value={drafts[kind].fields[def.key]}
-            >
-              <option value="">{def.required ? 'Select a column…' : '— none —'}</option>
+            <select class="{select} {!value ? 'border-amber-500' : 'border-[var(--border)]'}" bind:value={drafts[kind].fields[def.key]}>
+              <option value="">Select a column…</option>
+              {#if !def.required}<option value={NONE}>— none —</option>{/if}
               {#each options as f (f.id)}
                 <option value={f.id}>{f.name} ({f.type})</option>
               {/each}
@@ -124,6 +164,26 @@
             {/if}
           </label>
         {/each}
+      </div>
+    {:else if !draft.tableId}
+      <p class="text-muted text-sm">This table will be created with all {defs.length} columns.</p>
+    {/if}
+
+    {#if todoText.length}
+      <div class="mt-5 space-y-2 rounded-2xl border border-violet-500/30 bg-violet-500/8 p-3 text-sm">
+        <div class="font-semibold">Missing in Airtable</div>
+        <ul class="text-muted list-disc space-y-0.5 pl-5 text-xs">
+          {#each todoText as line (line)}<li>{line}</li>{/each}
+        </ul>
+        <button
+          class="flex items-center gap-1.5 rounded-xl bg-violet-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+          disabled={creating || !app.online}
+          onclick={createMissing}
+        >
+          {#if creating}<LoaderCircle class="size-4 animate-spin" />{:else}<Plus class="size-4" />{/if}
+          Create missing tables and columns
+        </button>
+        <p class="text-muted text-[11px]">Needs the token scope <code>schema.bases:write</code>. Existing data is not changed.</p>
       </div>
     {/if}
   {/if}
@@ -135,7 +195,7 @@
     <button class="rounded-xl px-4 py-2 text-sm transition hover:bg-slate-500/10" onclick={() => (app.showMapping = false)}>Cancel</button>
     <button
       class="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-40"
-      disabled={!canSave}
+      disabled={!canSave || creating}
       onclick={save}
     >
       Save mapping

@@ -6,6 +6,6 @@ if [ -z "${AIRTABLE_API_KEY:-}" ]; then
 fi
 esc() { printf '%s' "$1" | sed 's/[\\"]/\\&/g'; }
 cat > /usr/share/nginx/html/config.json <<JSON
-{"mode":"proxy","baseId":"$(esc "${AIRTABLE_BASE_ID:-}")","table":"$(esc "${AIRTABLE_TABLE:-Activities}")"}
+{"mode":"proxy","baseId":"$(esc "${AIRTABLE_BASE_ID:-}")"}
 JSON
-echo "oreas: wrote config.json (base ${AIRTABLE_BASE_ID:-<unset>}, table ${AIRTABLE_TABLE:-Activities})"
+echo "oreas: wrote config.json (base ${AIRTABLE_BASE_ID:-<unset>})"

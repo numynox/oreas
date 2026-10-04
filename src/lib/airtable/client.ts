@@ -1,5 +1,5 @@
 import type { AppConfig } from './config';
-import type { AirtableRecord, AirtableSchema } from './types';
+import type { AirtableField, AirtableRecord, AirtableSchema, AirtableTable } from './types';
 
 export class AirtableError extends Error {
   constructor(
@@ -19,7 +19,7 @@ function explain(status: number, body: string): string {
     case 401:
       return 'Airtable rejected the API key (401). Check the token in Settings / .env.';
     case 403:
-      return 'Access denied (403). The token needs the scopes data.records:read, data.records:write (for ratings) and schema.bases:read, and access to this base.';
+      return 'Access denied (403). The token needs the scopes data.records:read, schema.bases:read, data.records:write (ratings) and schema.bases:write (creating tables/columns), and access to this base.';
     case 404:
       return 'Base or table not found (404). Check the base ID and table in Settings.';
     case 405:
@@ -95,4 +95,28 @@ export function updateRecord(
     `/v0/${encodeURIComponent(cfg.baseId)}/${encodeURIComponent(tableId)}/${encodeURIComponent(recordId)}`,
     { method: 'PATCH', body: { fields, returnFieldsByFieldId: true, typecast: true } },
   );
+}
+
+/** Field definition for the Meta API (create table / create field). */
+export interface FieldSpec {
+  name: string;
+  type: string;
+  description?: string;
+  options?: Record<string, unknown>;
+}
+
+/** Create a table with the given fields (the first field becomes the primary field). Needs `schema.bases:write`. */
+export function createTable(cfg: AppConfig, name: string, fields: FieldSpec[], description?: string): Promise<AirtableTable> {
+  return request<AirtableTable>(cfg, `/v0/meta/bases/${encodeURIComponent(cfg.baseId)}/tables`, {
+    method: 'POST',
+    body: { name, description, fields },
+  });
+}
+
+/** Add a field to an existing table. Needs `schema.bases:write`. */
+export function createField(cfg: AppConfig, tableId: string, field: FieldSpec): Promise<AirtableField> {
+  return request<AirtableField>(cfg, `/v0/meta/bases/${encodeURIComponent(cfg.baseId)}/tables/${encodeURIComponent(tableId)}/fields`, {
+    method: 'POST',
+    body: field,
+  });
 }

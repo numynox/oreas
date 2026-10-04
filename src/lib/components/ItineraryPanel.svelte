@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { BedDouble, CalendarPlus, Columns3 } from '@lucide/svelte';
+  import { BedDouble, CalendarPlus, ChevronDown, ChevronUp, Columns3, X } from '@lucide/svelte';
   import { app } from '../state.svelte';
-  import { daysBetween, parseDate, scrollToDay, stays } from '../airtable/itinerary';
+  import { daysBetween, formatDay, parseDate, stays } from '../airtable/itinerary';
   import DayCard from './DayCard.svelte';
 
-  /** Day-by-day itinerary, rendered inside the sidebar / bottom sheet (whose scroll container drives the scroll-spy). */
-  let root: HTMLDivElement | undefined = $state();
+  /** Day-by-day itinerary, rendered inside the sidebar / bottom sheet. Days are selected manually (click, ↑/↓). */
 
   const days = $derived(app.days);
   const tripStays = $derived(stays(days));
@@ -30,37 +29,26 @@
     return a && b ? daysBetween(a, b) - 1 : 0;
   }
 
-  // Scroll-spy: the topmost visible day becomes the active one (drives the map).
-  $effect(() => {
-    const list = root?.closest<HTMLElement>('.overflow-y-auto');
-    if (!root || !list || !days.length) return;
-    const seen = new Map<string, number>();
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          const id = (e.target as HTMLElement).dataset.day!;
-          if (e.isIntersecting) seen.set(id, e.boundingClientRect.top);
-          else seen.delete(id);
-        }
-        if (Date.now() < app.spyPausedUntil) return;
-        const top = [...seen.entries()].sort((x, y) => x[1] - y[1])[0];
-        if (top && top[0] !== app.activeDayId) app.activeDayId = top[0];
-      },
-      { root: list, rootMargin: '0px 0px -55% 0px', threshold: 0 },
-    );
-    for (const el of root.querySelectorAll('[data-day]')) io.observe(el);
-    return () => io.disconnect();
-  });
+  const activeIndex = $derived(days.findIndex((d) => d.id === app.activeDayId));
+  const activeDay = $derived(activeIndex >= 0 ? days[activeIndex] : undefined);
 
-  function jump(dayId: string) {
-    app.activeDayId = dayId;
-    app.spyPausedUntil = Date.now() + 1200;
-    scrollToDay(dayId);
+  function onKey(e: KeyboardEvent) {
+    if (app.showSettings || app.showMapping || app.lightbox || app.selectedActivity) return;
+    if (e.target instanceof Element && e.target.closest('input, textarea, select')) return;
+    if (document.querySelector('[data-travel-popup]')) return; // Esc closes the popup first
+    if (e.key === 'ArrowDown' || e.key === 'j') app.stepDay(1);
+    else if (e.key === 'ArrowUp' || e.key === 'k') app.stepDay(-1);
+    else if (e.key === 'Escape' && app.activeDayId) app.selectDay(null);
+    else return;
+    e.preventDefault();
   }
 </script>
 
+<svelte:window onkeydown={onKey} />
+
 {#snippet header()}
-  <header class="space-y-2 px-4 pt-1 pb-2">
+  <!-- Fixed overview (does not scroll): date range, all overnight stops, and day stepper -->
+  <header class="shrink-0 space-y-2 border-b border-[var(--hairline)] px-4 pt-1 pb-2">
     {#if range}
       <div class="flex flex-wrap items-baseline gap-x-3">
         <div class="text-lg font-extrabold tracking-tight">{range.text}</div>
@@ -71,21 +59,48 @@
     {/if}
 
     {#if tripStays.length}
-      <div class="scroll-thin -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+      <div class="flex flex-wrap items-center gap-x-1 gap-y-1.5">
         {#each tripStays as s, i (s.firstDayId)}
           {@const active = !!app.activeDayId && s.dayIds.includes(app.activeDayId)}
-          {#if i > 0}<span class="text-muted self-center text-xs">→</span>{/if}
+          {#if i > 0}<span class="text-muted text-xs">→</span>{/if}
           <button
             class="flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs whitespace-nowrap transition {active
               ? 'border-violet-500 bg-violet-500 text-white'
               : 'border-[var(--hairline)] bg-white/40 hover:bg-white/70 dark:bg-white/5'}"
-            onclick={() => jump(s.firstDayId)}
+            onclick={() => app.selectDay(s.firstDayId, true)}
           >
             <BedDouble class="size-3.5" />
             <span class="font-semibold">{s.city}</span>
             <span class="opacity-70">{s.nights}n</span>
           </button>
         {/each}
+      </div>
+    {/if}
+
+    {#if days.length}
+      <div class="flex items-center gap-1 text-xs">
+        <button
+          class="rounded-lg p-1 transition hover:bg-slate-500/10 disabled:opacity-30"
+          title="Previous day (↑)"
+          disabled={activeIndex === 0}
+          onclick={() => app.stepDay(-1)}><ChevronUp class="size-4" /></button
+        >
+        <button
+          class="rounded-lg p-1 transition hover:bg-slate-500/10 disabled:opacity-30"
+          title="Next day (↓)"
+          disabled={activeIndex === days.length - 1}
+          onclick={() => app.stepDay(1)}><ChevronDown class="size-4" /></button
+        >
+        {#if activeDay}
+          {@const f = formatDay(activeDay.date)}
+          <span class="font-semibold">Day {app.dayNumber(activeDay)}</span>
+          {#if f}<span class="text-muted">{f.weekday} {f.date}{activeDay.city ? ` · ${activeDay.city}` : ''}</span>{/if}
+          <button class="text-muted ml-auto flex items-center gap-1 rounded-lg px-1.5 py-1 hover:bg-slate-500/10" title="Show whole trip (Esc)" onclick={() => app.selectDay(null)}>
+            <X class="size-3.5" /> Whole trip
+          </button>
+        {:else}
+          <span class="text-muted">Select a day, or step through with ↑ / ↓</span>
+        {/if}
       </div>
     {/if}
   </header>
@@ -125,7 +140,10 @@
   {/if}
 {/snippet}
 
-<div bind:this={root}>
-  {#if range || tripStays.length}{@render header()}{/if}
-  {@render dayList()}
+<!-- Only the day list scrolls; the overview stays on top with the panel's own background. -->
+<div class="flex min-h-0 flex-1 flex-col">
+  {#if range || tripStays.length || days.length}{@render header()}{/if}
+  <div class="scroll-thin min-h-0 flex-1 overflow-y-auto pt-2">
+    {@render dayList()}
+  </div>
 </div>

@@ -136,7 +136,7 @@
             <div class="border-b border-[var(--hairline)] px-5 pb-4"><Filters /></div>
             <div class="scroll-thin flex-1 overflow-y-auto px-3 py-3"><ActivityList /></div>
           {:else}
-            <div class="scroll-thin flex-1 overflow-y-auto"><ItineraryPanel /></div>
+            <ItineraryPanel />
           {/if}
         </div>
       {/key}
@@ -190,7 +190,10 @@
           </div>
         </div>
         {#key app.mode}
-          <div class="scroll-thin flex-1 overflow-y-auto {app.mode === 'explore' ? 'px-4 pb-6' : ''}" in:fade={{ duration: 200 }}>
+          <div
+            class="min-h-0 flex-1 {app.mode === 'explore' ? 'scroll-thin overflow-y-auto px-4 pb-6' : 'flex flex-col'}"
+            in:fade={{ duration: 200 }}
+          >
             {#if app.mode === 'explore'}
               <div class="mb-3"><Filters /></div>
               <ActivityList />
