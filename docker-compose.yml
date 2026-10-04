@@ -9,5 +9,5 @@ services:
     environment:
       # Set these in a .env next to this file, or in the Dockhand stack's environment variables.
       AIRTABLE_API_KEY: ${AIRTABLE_API_KEY:?Set AIRTABLE_API_KEY}
-      AIRTABLE_BASE_ID: ${AIRTABLE_BASE_ID:-appYOMAihqLlbtMdd}
+      AIRTABLE_BASE_ID: ${AIRTABLE_BASE_ID:?Set AIRTABLE_BASE_ID}
       AIRTABLE_TABLE: ${AIRTABLE_TABLE:-Activities}
