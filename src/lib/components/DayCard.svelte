@@ -60,7 +60,7 @@
     </header>
 
     {#if acts.length || missing}
-      <ul class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-1">
+      <ul class="grid grid-cols-[repeat(auto-fill,minmax(max(150px,calc((100%-0.5rem)/3)),1fr))] gap-1">
         {#each acts as a (a.id)}
           <li class="min-w-0">
             <button
