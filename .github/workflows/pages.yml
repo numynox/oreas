@@ -1,6 +1,9 @@
 name: Deploy to GitHub Pages
 
-on: {}
+# Manual only (Actions → Deploy to GitHub Pages → Run workflow). GitHub Pages is not enabled
+# for this private repo yet; `on: {}` is not a valid trigger and made every push show a failed run.
+on:
+  workflow_dispatch:
 
 permissions:
   contents: read

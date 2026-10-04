@@ -75,7 +75,7 @@ The app is served at `http://<pi>:8080`. The proxy accepts only `GET` requests p
 
 ### 3. GitHub Pages
 
-The workflow `.github/workflows/pages.yml` builds and deploys on every push to `main`. One-time setup: go to **Settings → Pages → Source** and choose **GitHub Actions**. No secrets are involved. Open the page, enter the base ID and token in Settings, and they are saved in your browser only.
+The workflow `.github/workflows/pages.yml` builds and deploys the app. It is currently manual-only (**Actions → Deploy to GitHub Pages → Run workflow**); add a `push` trigger to deploy on every push to `main`. One-time setup: go to **Settings → Pages → Source** and choose **GitHub Actions** (private repos need a paid plan for Pages). No secrets are involved. Open the page, enter the base ID and token in Settings, and they are saved in your browser only.
 
 ## Development
 
