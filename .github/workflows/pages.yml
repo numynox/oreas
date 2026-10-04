@@ -1,8 +1,9 @@
 name: Deploy to GitHub Pages
 
-# Manual only (Actions → Deploy to GitHub Pages → Run workflow). GitHub Pages is not enabled
-# for this private repo yet; `on: {}` is not a valid trigger and made every push show a failed run.
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -19,13 +20,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
+
       - run: npm ci
       - run: npm run check
       - run: npm run build
+
       # No secrets here: on GitHub Pages the app runs in "direct" mode and each user
       # enters their own Airtable token in Settings (stored in their browser only).
       - uses: actions/upload-pages-artifact@v3
