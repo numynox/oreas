@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
@@ -45,6 +48,36 @@ function oreasDevServer(env: Record<string, string>): Plugin {
   };
 }
 
+/**
+ * Build-only plugin: writes dist/sw.js from src/service-worker.js with the list of emitted files
+ * (the app shell to precache) and a version derived from them, so every deploy refreshes the shell.
+ */
+function oreasServiceWorker(): Plugin {
+  let outDir = 'dist';
+  const skip = new Set(['sw.js', 'config.json']);
+  const walk = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]));
+  return {
+    name: 'oreas-service-worker',
+    apply: 'build',
+    configResolved(c) {
+      outDir = c.build.outDir;
+    },
+    closeBundle() {
+      const files = walk(outDir)
+        .map((f) => relative(outDir, f).split('\\').join('/'))
+        .filter((f) => !skip.has(f))
+        .sort();
+      const hash = createHash('sha256');
+      for (const f of files) hash.update(f).update(readFileSync(join(outDir, f)));
+      const sw = readFileSync('src/service-worker.js', 'utf8')
+        .replace('__OREAS_VERSION__', hash.digest('hex').slice(0, 12))
+        .replace('__OREAS_PRECACHE__', JSON.stringify(files));
+      writeFileSync(join(outDir, 'sw.js'), sw);
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   // Load all env vars (no VITE_ prefix) – used server-side only, never exposed to the client bundle.
   const env = loadEnv(mode, process.cwd(), '');
@@ -52,7 +85,7 @@ export default defineConfig(({ mode }) => {
     base: './',
     build: { chunkSizeWarningLimit: 1600 }, // maplibre-gl alone is ~800 kB
     worker: { format: 'es' },
-    plugins: [tailwindcss(), svelte(), oreasDevServer(env)],
+    plugins: [tailwindcss(), svelte(), oreasDevServer(env), oreasServiceWorker()],
     server: {
       proxy: env.AIRTABLE_API_KEY
         ? {

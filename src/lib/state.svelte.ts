@@ -25,6 +25,7 @@ import type { AirtableRecord } from './airtable/types';
 import { choicesOf, toActivity, type Activity } from './airtable/activities';
 import { buildColorMap, NEUTRAL } from './colors';
 import { images } from './images.svelte';
+import { offlineMap, planTiles, type Point } from './offlineMap.svelte';
 import type { AirtableAttachment } from './airtable/types';
 import type { StyleId } from './mapStyles';
 
@@ -230,6 +231,13 @@ class AppState {
 
   /** All image attachments across all activities (unfiltered). */
   allImages = $derived<AirtableAttachment[]>(this.activities.flatMap((a) => a.images));
+
+  /** Places that define the offline map area: every placed activity plus the itinerary's overnight stops. */
+  mapPoints = $derived<Point[]>([
+    ...this.activities.filter((a) => a.lat !== undefined && a.lng !== undefined).map((a) => ({ lat: a.lat!, lng: a.lng! })),
+    ...this.days.filter((d) => d.lat !== undefined && d.lng !== undefined).map((d) => ({ lat: d.lat!, lng: d.lng! })),
+  ]);
+  mapPlan = $derived(planTiles(this.mapPoints));
 
   /** Active activities without a rating (priority). */
   unrated = $derived(this.activities.filter((a) => !a.priority && !this.isInactive(a)));
@@ -529,9 +537,32 @@ class AppState {
       [...all.map((att) => ({ att, v: 'large' as const })), ...all.map((att) => ({ att, v: 'full' as const }))],
       'Downloading images',
     );
+    await offlineMap.persist();
     await this.refreshStorage();
     if (r.failed) this.toast('error', `${r.failed} image(s) could not be downloaded. Try again after a sync.`);
     else this.toast('success', 'All images are available offline.', undefined, 3000);
+  }
+
+  /** Pre-download the basemap for the area covered by the activities (and itinerary stops). */
+  async downloadMap() {
+    if (!this.online) {
+      this.toast('error', 'You are offline – connect to download the map.');
+      return;
+    }
+    if (!this.mapPoints.length) {
+      this.toast('error', 'No activities with coordinates – nothing to download.');
+      return;
+    }
+    try {
+      const r = await offlineMap.download(this.mapPoints);
+      await offlineMap.persist();
+      await this.refreshStorage();
+      if (!r) return;
+      if (r.failed) this.toast('error', `${r.failed} map file(s) could not be downloaded. Try again later.`);
+      else this.toast('success', 'The map of the activity area is available offline.', undefined, 3000);
+    } catch (e) {
+      this.toast('error', `Map download failed: ${e instanceof Error ? e.message : e}`);
+    }
   }
 
   async clearImages() {

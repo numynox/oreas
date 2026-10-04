@@ -14,7 +14,9 @@ Everything it uses is free: [Svelte 5](https://svelte.dev), [Vite](https://vite.
 - **Details**: an image carousel with a fullscreen lightbox, duration, cost, booking flag, notes, the website and a Google Maps link.
 - **Unplaced activities**: records without Latitude/Longitude still appear in the list with an "Unplaced" badge.
 - **Offline-friendly cache**: data is stored in `localStorage`. It syncs automatically when the cache is more than 24 h old, or when you press sync.
-- **Offline images**: after each sync, the large thumbnail of every image is saved to IndexedDB in the background. Full-size images are saved when you first open them in the fullscreen viewer, or all at once with **Settings → Download everything for offline**. Settings also shows the online status and storage use. Map tiles and the app shell are not yet offline (see [OPEN-POINTS.md](OPEN-POINTS.md)).
+- **Offline images**: after each sync, the large thumbnail of every image is saved to IndexedDB in the background. Full-size images are saved when you first open them in the fullscreen viewer, or all at once with **Settings → Download everything for offline**. Settings also shows the online status and storage use.
+- **Offline app and map**: a service worker (production build only) caches the app itself, so Oreas starts without a connection. Every map area you look at is cached as you go. **Settings → Download map of activity area** pre-downloads the area covered by your activities and itinerary stops: an overview of the whole area (zoom up to 10, reduced automatically for trips spanning large distances) plus street level around each place. This covers the OpenFreeMap styles (Streets, Minimal, and the base of Terrain and Railways); the other raster maps and overlays are only cached as you view them.
+- **Installable**: a web app manifest lets you add Oreas to the home screen or install it as an app (Chrome, Edge, Safari, Firefox on Android). Downloads ask the browser to make storage persistent so cached data and images are not evicted; Settings shows whether it is. Firefox asks for permission. Safari may clear storage of sites that are not on the home screen after about 7 days without use.
 - **Robust to column renames**: columns are referenced by Airtable field ID, so renaming a column changes nothing. If a column is deleted, Oreas asks you to pick a replacement in **Settings → Field mapping**.
 - Light and dark themes, plus a mobile bottom-sheet layout.
 
@@ -96,9 +98,12 @@ src/
     itinerary.ts             record → Day conversion, stays, date helpers
     cache.ts                 localStorage cache (24 h)
   lib/images.svelte.ts       offline image store (IndexedDB blobs → object URLs)
+  lib/offlineMap.svelte.ts   offline map: tile plan for the activity area, bulk download, storage persistence
+  service-worker.js          service worker template (app shell + map tile caching), built into dist/sw.js
   lib/mapStyles.ts           basemap catalog (vector styles, raster maps, hillshade/rail overlays)
   lib/basemap.ts             style/overlay helpers for the map
   lib/components/            Map, filters, list, detail drawer, settings, mapping, lightbox…
+public/                      favicon, app icons, web app manifest
 docker/                      nginx proxy template + runtime config.json script
 ```
 
