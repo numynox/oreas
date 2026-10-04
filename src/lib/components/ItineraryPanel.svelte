@@ -60,11 +60,11 @@
 </script>
 
 {#snippet header()}
-  <header class="space-y-3 px-5 pt-2 pb-4">
+  <header class="space-y-2 px-4 pt-1 pb-2">
     {#if range}
-      <div>
-        <div class="text-2xl font-extrabold tracking-tight">{range.text}</div>
-        <div class="text-muted text-sm">
+      <div class="flex flex-wrap items-baseline gap-x-3">
+        <div class="text-lg font-extrabold tracking-tight">{range.text}</div>
+        <div class="text-muted text-xs">
           {range.days} days · {tripStays.length} stop{tripStays.length === 1 ? '' : 's'} · {days.reduce((n, d) => n + d.activityIds.length, 0)} activities planned
         </div>
       </div>
@@ -111,13 +111,11 @@
     </div>
   {:else}
     <!-- Bottom padding lets the last day scroll to the top. -->
-    <div class="relative space-y-4 px-4 pb-[40vh]">
-      <!-- timeline rail -->
-      <div class="absolute top-6 bottom-8 left-[37px] w-0.5 rounded-full bg-gradient-to-b from-violet-400/60 via-fuchsia-400/40 to-transparent"></div>
+    <div class="space-y-1 px-2 pb-[40vh]">
       {#each days as d, i (d.id)}
         {@const gap = gapBefore(i)}
         {#if gap > 0}
-          <div class="text-muted relative pl-14 text-xs italic">
+          <div class="text-muted pl-[4.25rem] text-xs italic">
             {gap} unplanned day{gap > 1 ? 's' : ''}
           </div>
         {/if}

@@ -49,7 +49,7 @@
   }
 
   /** Desktop sidebar width: narrow list for exploring, wider for the day-by-day itinerary (animated). */
-  const sideW = $derived(app.mode === 'itinerary' ? Math.min(540, Math.round(width * 0.42)) : 384);
+  const sideW = $derived(app.mode === 'itinerary' ? Math.min(880, Math.max(540, Math.round(width * 0.56))) : 384);
   const SIDE_ANIM = 'transition-property: width, left; transition-duration: 450ms; transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1)';
 
   const padding = $derived(
