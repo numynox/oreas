@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Info, TrainFront, X } from '@lucide/svelte';
+  import { TrainFront, X } from '@lucide/svelte';
   import { fade } from 'svelte/transition';
   import { portal } from '../portal';
 
-  /** Short travel label as a chip; the long "Travel details" open in a popup. Without a label, only an info sign is shown. */
+  /** Short travel label as a chip; the long "Travel details" open in a popup. Without a label, only the train icon is shown. */
   let { travel, details }: { travel?: string; details?: string } = $props();
 
   let trigger: HTMLButtonElement | undefined = $state();
@@ -47,18 +47,17 @@
     onclick={toggle}
   >
     <TrainFront class="size-3 shrink-0" /><span class="truncate">{travel}</span>
-    {#if details}<Info class="size-3 shrink-0 opacity-70" />{/if}
   </button>
 {:else if details}
   <button
     bind:this={trigger}
-    class="flex shrink-0 items-center rounded-full p-0.5 text-sky-700 transition hover:bg-sky-500/15 dark:text-sky-300"
+    class="flex shrink-0 items-center rounded-full bg-sky-500/12 px-2 py-0.5 text-sky-900 transition hover:bg-sky-500/22 dark:text-sky-200"
     title="Show travel details"
     aria-label="Show travel details"
     aria-expanded={!!pos}
     onclick={toggle}
   >
-    <Info class="size-3.5" />
+    <TrainFront class="size-3" />
   </button>
 {/if}
 

@@ -17,11 +17,6 @@
       d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}) });
     return { text: `${fmt(first, false)} – ${fmt(last, true)}`, days: daysBetween(dated[0].date!, dated[dated.length - 1].date!) + 1 };
   });
-  /** Day numbers count from the first date, so gaps keep the numbering honest. */
-  function dayNumber(i: number): number {
-    const d = days[i];
-    return d.date && dated.length ? daysBetween(dated[0].date!, d.date) + 1 : i + 1;
-  }
   function gapBefore(i: number): number {
     if (i === 0) return 0;
     const a = days[i - 1].date;
@@ -67,7 +62,7 @@
             class="flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs whitespace-nowrap transition {active
               ? 'border-violet-500 bg-violet-500 text-white'
               : 'border-[var(--hairline)] bg-white/40 hover:bg-white/70 dark:bg-white/5'}"
-            onclick={() => app.selectDay(s.firstDayId, true)}
+            onclick={() => app.selectStay(s.dayIds, true)}
           >
             <BedDouble class="size-3.5" />
             <span class="font-semibold">{s.city}</span>
@@ -134,7 +129,7 @@
             {gap} unplanned day{gap > 1 ? 's' : ''}
           </div>
         {/if}
-        <DayCard day={d} number={dayNumber(i)} />
+        <DayCard day={d} number={app.dayNumber(d)} />
       {/each}
     </div>
   {/if}

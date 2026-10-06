@@ -2,7 +2,7 @@
   import { BedDouble, Camera, ChevronRight, MapPinOff, StickyNote } from '@lucide/svelte';
   import { slide } from 'svelte/transition';
   import { app } from '../state.svelte';
-  import { formatDay, type Day } from '../airtable/itinerary';
+  import { parseDate, type Day } from '../airtable/itinerary';
   import { formatDuration } from '../airtable/activities';
   import Img from './Img.svelte';
   import TypeIcon from './TypeIcon.svelte';
@@ -10,7 +10,12 @@
 
   let { day, number }: { day: Day; number: number } = $props();
 
-  const when = $derived(formatDay(day.date));
+  const when = $derived.by(() => {
+    if (!day.date) return undefined;
+    const d = parseDate(day.date);
+    const part = (o: Intl.DateTimeFormatOptions) => d.toLocaleDateString('en-GB', o);
+    return { weekday: part({ weekday: 'short' }), day: d.getDate(), month: part({ month: 'short' }) };
+  });
   const active = $derived(app.activeDayId === day.id);
   const acts = $derived(day.activityIds.map((id) => app.activities.find((a) => a.id === id)).filter((a) => !!a));
   const missing = $derived(day.activityIds.length - acts.length);
@@ -36,27 +41,31 @@
   onclick={() => app.selectDay(active ? null : day.id)}
   onkeydown={(e) => e.key === 'Enter' && app.selectDay(active ? null : day.id)}
 >
-  <div
-    class="flex w-12 shrink-0 flex-col items-center justify-center self-start rounded-xl py-1 text-white shadow-sm transition {active
-      ? 'bg-gradient-to-br from-violet-500 to-fuchsia-500'
-      : 'bg-gradient-to-br from-slate-400 to-slate-500 dark:from-slate-600 dark:to-slate-700'}"
-  >
-    <span class="text-[8px] leading-tight font-semibold uppercase opacity-80">Day</span>
-    <span class="text-base leading-none font-extrabold">{number}</span>
-    {#if when}<span class="mt-0.5 text-[9px] leading-tight font-medium opacity-90">{when.weekday}</span>{/if}
+  <div class="flex w-12 shrink-0 flex-col items-center gap-0.5 self-start">
+    <div
+      class="flex w-full flex-col items-center justify-center rounded-xl py-1 text-white shadow-sm transition {active
+        ? 'bg-gradient-to-br from-violet-500 to-fuchsia-500'
+        : 'bg-gradient-to-br from-slate-400 to-slate-500 dark:from-slate-600 dark:to-slate-700'}"
+    >
+      {#if when}
+        <span class="text-[9px] leading-tight font-semibold uppercase opacity-80">{when.weekday}</span>
+        <span class="text-base leading-none font-extrabold">{when.day}</span>
+        <span class="text-[9px] leading-tight font-medium opacity-90">{when.month}</span>
+      {:else}
+        <span class="py-1 text-[9px] leading-tight font-semibold opacity-90">No date</span>
+      {/if}
+    </div>
+    <span class="text-muted text-[10px] leading-tight">Day {number}</span>
   </div>
 
   <div class="min-w-0 flex-1 space-y-1.5">
     <header class="flex min-w-0 items-center gap-2 text-sm">
-      {#if when}
-        <span class="shrink-0 font-extrabold tracking-tight">{when.date}</span>
-      {:else}
-        <span class="text-muted shrink-0 font-semibold">No date</span>
+      {#if day.title}<span class="min-w-0 truncate font-bold">{day.title}</span>{/if}
+      {#if day.travel || day.travelDetails}
+        <span class="ml-auto flex min-w-0 shrink"><TravelInfo travel={day.travel} details={day.travelDetails} /></span>
       {/if}
-      {#if day.title}<span class="text-muted min-w-0 truncate font-medium">{day.title}</span>{/if}
-      <TravelInfo travel={day.travel} details={day.travelDetails} />
       {#if day.city || day.accommodation}
-        <span class="ml-auto flex max-w-[45%] shrink-0 items-center gap-1 text-xs" title={[day.city, day.accommodation].filter(Boolean).join(' · ')}>
+        <span class="{day.travel || day.travelDetails ? '' : 'ml-auto'} flex max-w-[45%] shrink-0 items-center gap-1 text-xs" title={[day.city, day.accommodation].filter(Boolean).join(' · ')}>
           <BedDouble class="size-3.5 shrink-0 text-violet-500" />
           <span class="truncate"><b class="font-semibold">{day.city ?? 'Overnight'}</b>{#if day.accommodation}<span class="text-muted"> · {day.accommodation}</span>{/if}</span>
         </span>
@@ -74,6 +83,7 @@
               title={a.name}
               onclick={(e) => {
                 e.stopPropagation();
+                if (!app.activeStayDayIds?.includes(day.id)) app.activeStayDayIds = null;
                 app.activeDayId = day.id;
                 app.selectedId = a.id;
               }}

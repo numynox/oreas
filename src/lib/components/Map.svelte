@@ -63,14 +63,31 @@
         ? [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: tripStays.map((s) => [s.lng!, s.lat!]) } }]
         : [],
   });
+  /** Per stay: its activities (all nights) counted by "color by" color, largest slice first. */
+  const stayPies = $derived(
+    tripStays.map((s) => {
+      const counts = new Map<string, number>();
+      for (const d of app.days) {
+        if (!s.dayIds.includes(d.id)) continue;
+        for (const id of d.activityIds) {
+          const a = byId.get(id);
+          if (a) counts.set(app.colorOf(a), (counts.get(app.colorOf(a)) ?? 0) + 1);
+        }
+      }
+      const slices = [...counts].sort((x, y) => y[1] - x[1]);
+      return { id: `pie-${slices.map(([c, n]) => `${c}:${n}`).join(',')}`, slices };
+    }),
+  );
   const stopData = $derived<GeoJSON.FeatureCollection>({
     type: 'FeatureCollection',
-    features: tripStays.map((s) => ({
+    features: tripStays.map((s, i) => ({
       type: 'Feature',
       properties: {
         label: `${s.city} · ${s.nights} night${s.nights > 1 ? 's' : ''}`,
         day: s.firstDayId,
+        stay: i,
         active: app.activeDayId && s.dayIds.includes(app.activeDayId) ? 1 : 0,
+        pie: stayPies[i].id,
       },
       geometry: { type: 'Point', coordinates: [s.lng!, s.lat!] },
     })),
@@ -84,7 +101,7 @@
         if (!a || a.lat === undefined) continue;
         features.push({
           type: 'Feature',
-          properties: { id: a.id, name: a.name, color: app.colorOf(a), active: d.id === app.activeDayId ? 1 : 0, hover: app.hoveredId === a.id ? 1 : 0 },
+          properties: { id: a.id, name: a.name, color: app.colorOf(a), active: d.id === app.activeDayId || app.activeStayDayIds?.includes(d.id) ? 1 : 0, hover: app.hoveredId === a.id ? 1 : 0 },
           geometry: { type: 'Point', coordinates: [a.lng!, a.lat!] },
         });
       }
@@ -106,6 +123,56 @@
         <div style="font-weight:650;font-size:14px;line-height:1.25">${esc(a.name)}</div>
         ${meta ? `<div style="font-size:12px;opacity:.65;margin-top:2px">${meta}</div>` : ''}
       </div></div>`;
+  }
+
+  /** Stop icon size (css px) when its day is selected; unselected stops are scaled down via icon-size. */
+  const PIE_SIZE = 36;
+  const PIE_SMALL = 0.62;
+
+  /** Draw a stop as a pie of activity counts with a violet ring (white disc when the stay has no activities). */
+  function pieImage(slices: [string, number][]): ImageData {
+    const ratio = 2;
+    const px = PIE_SIZE * ratio;
+    const ctx = document.createElement('canvas').getContext('2d')!;
+    ctx.canvas.width = ctx.canvas.height = px;
+    const c = px / 2;
+    const ring = 3 * ratio;
+    const r = c - ring / 2 - ratio;
+    const total = slices.reduce((n, [, k]) => n + k, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(c, c, r, 0, Math.PI * 2);
+    ctx.fill();
+    let start = -Math.PI / 2;
+    for (const [color, n] of slices) {
+      const end = start + (n / total) * Math.PI * 2;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(c, c);
+      ctx.arc(c, c, r, start, end);
+      ctx.closePath();
+      ctx.fill();
+      if (slices.length > 1) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = ratio;
+        ctx.stroke();
+      }
+      start = end;
+    }
+    ctx.strokeStyle = '#8b5cf6';
+    ctx.lineWidth = ring;
+    ctx.beginPath();
+    ctx.arc(c, c, r, 0, Math.PI * 2);
+    ctx.stroke();
+    return ctx.getImageData(0, 0, px, px);
+  }
+
+  /** Register missing pie images (images are keyed by content, and dropped by MapLibre on style switch). */
+  function ensurePies() {
+    if (!map) return;
+    for (const p of untrack(() => stayPies)) {
+      if (!map.hasImage(p.id)) map.addImage(p.id, pieImage(p.slices), { pixelRatio: 2 });
+    }
   }
 
   type Expr = maplibregl.ExpressionSpecification;
@@ -172,6 +239,7 @@
     const ACTIVE: Expr = ['==', ['get', 'active'], 1];
     const halo = baseDark ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.95)';
     map.addSource('trip-path', { type: 'geojson', data: untrack(() => pathData) });
+    ensurePies();
     map.addSource('trip-stops', { type: 'geojson', data: untrack(() => stopData) });
     map.addSource('trip-acts', { type: 'geojson', data: untrack(() => tripActs) });
     map.addLayer({
@@ -218,13 +286,14 @@
     });
     map.addLayer({
       id: 'stops',
-      type: 'circle',
+      type: 'symbol',
       source: 'trip-stops',
-      paint: {
-        'circle-color': ['case', ACTIVE, '#8b5cf6', '#ffffff'],
-        'circle-radius': ['case', ACTIVE, 9, 7],
-        'circle-stroke-color': '#8b5cf6',
-        'circle-stroke-width': 3,
+      layout: {
+        'icon-image': ['get', 'pie'],
+        'icon-size': ['case', ACTIVE, 1, PIE_SMALL],
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true,
+        'symbol-sort-key': ['get', 'active'],
       },
     });
     map.addLayer({
@@ -235,7 +304,7 @@
         'text-field': ['get', 'label'],
         'text-font': ['Noto Sans Bold'],
         'text-size': ['case', ACTIVE, 13, 11],
-        'text-offset': [0, -1.4],
+        'text-offset': ['case', ACTIVE, ['literal', [0, -1.45]], ['literal', [0, -1.2]]],
         'text-anchor': 'bottom',
       },
       paint: {
@@ -309,18 +378,31 @@
     fitBounds(b, 13, animate);
   }
 
-  /** Itinerary: fit the active day (its activities + tonight's and last night's stop), else the whole trip. */
+  /**
+   * Itinerary: fit the active day, else the whole trip. A day covers its activities, plus last night's
+   * and tonight's stop when it is a travel day; a selected stop covers the activities of all its nights.
+   */
   function fitTrip(animate = true) {
     const b = new maplibregl.LngLatBounds();
     const days = app.days;
     const i = days.findIndex((d) => d.id === app.activeDayId);
-    if (i >= 0) {
-      const d = days[i];
+    const focus = app.activeStayDayIds;
+    const extendActs = (d: (typeof days)[number]) => {
       for (const id of d.activityIds) {
         const a = byId.get(id);
         if (a?.lat !== undefined) b.extend([a.lng!, a.lat]);
       }
-      for (const dd of [d, days[i - 1]]) if (dd?.lat !== undefined) b.extend([dd.lng!, dd.lat]);
+    };
+    if (i >= 0 && focus?.includes(days[i].id)) {
+      for (const d of days) if (focus.includes(d.id)) extendActs(d);
+      const st = tripStays.find((s) => s.dayIds.includes(days[i].id));
+      if (b.isEmpty() && st) b.extend([st.lng!, st.lat!]);
+    } else if (i >= 0) {
+      const d = days[i];
+      const prev = days[i - 1];
+      extendActs(d);
+      const moved = !!prev && prev.lat !== undefined && d.lat !== undefined && (prev.lat !== d.lat || prev.lng !== d.lng);
+      if (moved || d.travel || b.isEmpty()) for (const dd of [d, prev]) if (dd?.lat !== undefined) b.extend([dd.lng!, dd.lat]);
     }
     if (b.isEmpty()) {
       for (const st of tripStays) b.extend([st.lng!, st.lat!]);
@@ -389,8 +471,9 @@
     map.on('mouseenter', 'stops', () => map && (map.getCanvas().style.cursor = 'pointer'));
     map.on('mouseleave', 'stops', () => map && (map.getCanvas().style.cursor = ''));
     map.on('click', 'stops', (e: MapLayerMouseEvent) => {
-      const day = e.features?.[0]?.properties.day;
-      if (day) app.showDay(String(day));
+      const st = tripStays[Number(e.features?.[0]?.properties.stay)];
+      if (!st) return;
+      app.selectStay(st.dayIds, true);
     });
     map.on('click', (e) => {
       const hits = map!.queryRenderedFeatures(e.point, { layers: [...POINT_LAYERS, 'stops'] });
@@ -412,6 +495,7 @@
     const st = stopData;
     const a = tripActs;
     if (!styleReady || !map) return;
+    ensurePies();
     (map.getSource('trip-path') as GeoJSONSource | undefined)?.setData(p);
     (map.getSource('trip-stops') as GeoJSONSource | undefined)?.setData(st);
     (map.getSource('trip-acts') as GeoJSONSource | undefined)?.setData(a);
@@ -442,6 +526,7 @@
   // Itinerary: follow the active day.
   $effect(() => {
     void app.activeDayId;
+    void app.activeStayDayIds;
     void app.days;
     if (!styleReady || app.mode !== 'itinerary') return;
     untrack(() => fitTrip(true));
@@ -476,15 +561,18 @@
     if (id === lastFlown) return;
     lastFlown = id;
     if (a && a.lat !== undefined && a.lng !== undefined) {
-      untrack(() =>
+      untrack(() => {
+        // Use an offset, not `padding`: padding passed to flyTo persists on the map and is added
+        // to every later fitBounds padding, so day fits would no longer fit the canvas.
+        const p = safePadding(padding);
         map!.flyTo({
           center: [a.lng!, a.lat!],
           zoom: Math.max(map!.getZoom(), app.mode === 'itinerary' ? 11 : 12),
-          padding: safePadding(padding),
+          offset: [(p.left - p.right) / 2, (p.top - p.bottom) / 2],
           speed: 1.4,
           essential: true,
-        }),
-      );
+        });
+      });
     }
   });
 

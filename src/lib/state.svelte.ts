@@ -127,6 +127,8 @@ class AppState {
   mode = $state<Mode>(modeFromHash());
   /** Day selected in the itinerary (null = whole trip). */
   activeDayId = $state<string | null>(null);
+  /** Day ids of a selected overnight stop (map pie or summary chip); null when a single day is selected. */
+  activeStayDayIds = $state<string[] | null>(null);
   syncing = $state(false);
   imagesExpired = $state(false);
   online = $state(typeof navigator === 'undefined' ? true : navigator.onLine);
@@ -604,9 +606,20 @@ class AppState {
   /** Select a day (null = whole trip). Closes any open activity so the map can frame the day. */
   selectDay(dayId: string | null, scroll = false) {
     this.selectedId = null;
+    this.activeStayDayIds = null;
     this.activeDayId = dayId;
     // Scroll after the DOM has updated: selecting a day changes the card heights above it.
     if (dayId && scroll) void tick().then(() => scrollToDay(dayId));
+  }
+
+  /** Select an overnight stop: all its nights' activities are highlighted and framed (no travel to/from it). */
+  selectStay(dayIds: string[], scroll = false) {
+    if (!dayIds.length) return;
+    this.setMode('itinerary');
+    this.selectedId = null;
+    this.activeStayDayIds = dayIds;
+    this.activeDayId = dayIds[0];
+    if (scroll) void tick().then(() => scrollToDay(dayIds[0]));
   }
 
   /** Step to the previous/next day (from none: first/last day). */
@@ -628,6 +641,7 @@ class AppState {
   showDay(dayId: string) {
     this.setMode('itinerary');
     this.selectedId = null;
+    this.activeStayDayIds = null;
     this.activeDayId = dayId;
     // Wait for the itinerary to render before scrolling.
     setTimeout(() => scrollToDay(dayId), 50);
