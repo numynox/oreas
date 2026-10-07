@@ -1,10 +1,11 @@
+import { fetchAndStore, MAP_CACHES } from './mapCache';
+
 /**
  * Offline basemap.
  *
- * The service worker (src/service-worker.js) caches every map request as you go. This module adds a
- * bulk download of the area covered by the trip's activities: an overview of their bounding box at
- * low zoom plus street-level tiles around each place. The requests simply go through the service
- * worker, which stores them, so the download needs an active service worker (production build).
+ * Every map request is cached as you go (mapCache.ts, and the service worker when it intercepts).
+ * This module adds a bulk download of the area covered by the trip's activities: an overview of their
+ * bounding box at low zoom plus street-level tiles around each place, stored in the same map cache.
  *
  * Only OpenFreeMap (Streets, Minimal, Railways base, Terrain base) is pre-downloaded; the raster
  * styles (Topographic, Aerial, GSI, hillshade, railway overlay) are only cached as you view them.
@@ -12,7 +13,6 @@
 
 const OFM = 'https://tiles.openfreemap.org';
 const STYLES = ['liberty', 'dark', 'positron', 'fiord'].map((s) => `${OFM}/styles/${s}`);
-const MAP_CACHES = ['oreas-map-ofm', 'oreas-map-raster'];
 /** Glyph ranges U+0000–U+21FF (Latin, Greek, Cyrillic, most alphabets, punctuation). CJK is drawn with local fonts by MapLibre. */
 const GLYPH_RANGES = Array.from({ length: 34 }, (_, i) => `${i * 256}-${i * 256 + 255}`);
 /** Upper bound for the overview of the whole area (tiles over all overview zooms). */
@@ -217,15 +217,15 @@ class OfflineMap {
   }
 
   async download(points: Point[]): Promise<MapDownloadSummary | null> {
-    if (this.progress || !this.controlled) return null;
+    if (this.progress || !this.supported) return null;
     this.abort = false;
     const plan = planTiles(points);
     const urls: string[] = [];
     // Styles and the TileJSON first: the service worker keeps them for offline starts.
-    const tileJson = (await (await fetch(`${OFM}/planet`)).json()) as { tiles: string[] };
+    const tileJson = (await (await fetchAndStore(`${OFM}/planet`)).json()) as { tiles: string[] };
     const template = tileJson.tiles[0];
     for (const s of STYLES) {
-      const style = await (await fetch(s)).json();
+      const style = await (await fetchAndStore(s)).json();
       const sprite = typeof style.sprite === 'string' ? style.sprite : undefined;
       if (sprite) for (const suf of ['', '@2x']) urls.push(`${sprite}${suf}.json`, `${sprite}${suf}.png`);
       const glyphs: string | undefined = style.glyphs;
@@ -245,7 +245,7 @@ class OfflineMap {
       while (i < todo.length && !this.abort) {
         const url = todo[i++];
         try {
-          const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
+          const res = await fetchAndStore(url);
           // Empty ocean tiles may come back as 204; anything else non-OK counts as failed.
           if (!res.ok) state.failed++;
           else state.bytes += (await res.arrayBuffer()).byteLength;

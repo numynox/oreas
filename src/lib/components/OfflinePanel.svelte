@@ -108,12 +108,13 @@
     <h4 class="flex items-center gap-1.5 text-sm font-semibold"><MapIcon class="size-4" /> Offline map</h4>
     {#if !offlineMap.supported}
       <p class="text-muted text-xs">This browser (or private window) does not support offline storage for the app and map.</p>
-    {:else if !offlineMap.controlled}
-      <p class="text-muted text-xs">
-        The offline worker is not active yet{import.meta.env.DEV ? ' (it only runs in the production build)' : ' – reload the page once'}. Until then the
-        map needs a connection.
-      </p>
     {:else}
+      {#if !offlineMap.controlled}
+        <p class="text-muted text-xs">
+          The offline worker is not active yet{import.meta.env.DEV ? ' (it only runs in the production build)' : ' – reload the page once'}. Until then
+          Oreas itself cannot start without a connection.
+        </p>
+      {/if}
       <p class="text-muted text-xs">
         Every map area you view is kept for offline use. Download the whole area covered by your
         {app.mapPoints.length} place{app.mapPoints.length === 1 ? '' : 's'} ahead of time: an overview up to zoom {plan.overviewZoom}
@@ -141,7 +142,7 @@
       </div>
     {/if}
 
-    {#if offlineMap.supported && offlineMap.controlled}
+    {#if offlineMap.supported}
       <div class="flex flex-wrap gap-2">
         <button
           class="flex items-center gap-1.5 rounded-xl bg-violet-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-40"
