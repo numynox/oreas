@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { maplibregl } from '../maplibre';
+  import { maplibregl, transformRequest } from '../maplibre';
   import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
   import { onDestroy, onMount, untrack } from 'svelte';
   import { app } from '../state.svelte';
@@ -422,7 +422,8 @@
       bounds: JAPAN,
       fitBoundsOptions: { padding: 40 },
       attributionControl: { compact: true },
-      // Airtable images may come from other origins; no auth needed for tiles.
+      // Tiles are served from the offline cache on the main thread (see maplibre.ts).
+      transformRequest,
     });
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
     map.addControl(new maplibregl.GeolocateControl({ trackUserLocation: false }), 'bottom-right');
