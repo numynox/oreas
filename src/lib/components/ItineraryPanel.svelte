@@ -1,10 +1,26 @@
 <script lang="ts">
   import { BedDouble, CalendarPlus, ChevronDown, ChevronUp, Columns3, X } from '@lucide/svelte';
+  import { onMount } from 'svelte';
   import { app } from '../state.svelte';
-  import { daysBetween, formatDay, parseDate, stays } from '../airtable/itinerary';
+  import { daysBetween, formatDay, parseDate, scrollToDay, stays } from '../airtable/itinerary';
   import DayCard from './DayCard.svelte';
 
   /** Day-by-day itinerary, rendered inside the sidebar / bottom sheet. Days are selected manually (click, ↑/↓). */
+
+  /** Bottom sheet on phones: the overnight stops become one horizontally scrolling line. */
+  let { mobile = false }: { mobile?: boolean } = $props();
+  let stopsRow: HTMLDivElement | undefined = $state();
+
+  // Keep the selected stop visible in the scrolling row.
+  $effect(() => {
+    void app.activeDayId;
+    if (!mobile || !stopsRow) return;
+    const el = stopsRow.querySelector<HTMLElement>('[data-active="true"]');
+    if (!el) return;
+    const row = stopsRow;
+    const left = el.offsetLeft - (row.clientWidth - el.offsetWidth) / 2;
+    row.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+  });
 
   const days = $derived(app.days);
   const tripStays = $derived(stays(days));
@@ -23,6 +39,11 @@
     const b = days[i].date;
     return a && b ? daysBetween(a, b) - 1 : 0;
   }
+
+  // Opening the itinerary (mode switch, back navigation): show the selected day.
+  onMount(() => {
+    if (app.activeDayId) scrollToDay(app.activeDayId, false);
+  });
 
   const activeIndex = $derived(days.findIndex((d) => d.id === app.activeDayId));
   const activeDay = $derived(activeIndex >= 0 ? days[activeIndex] : undefined);
@@ -54,11 +75,15 @@
     {/if}
 
     {#if tripStays.length}
-      <div class="flex flex-wrap items-center gap-x-1 gap-y-1.5">
+      <div
+        bind:this={stopsRow}
+        class="flex items-center gap-x-1 {mobile ? 'no-scrollbar -mx-4 overflow-x-auto px-4' : 'flex-wrap gap-y-1.5'}"
+      >
         {#each tripStays as s, i (s.firstDayId)}
           {@const active = !!app.activeDayId && s.dayIds.includes(app.activeDayId)}
-          {#if i > 0}<span class="text-muted text-xs">→</span>{/if}
+          {#if i > 0}<span class="text-muted shrink-0 text-xs">→</span>{/if}
           <button
+            data-active={active}
             class="flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs whitespace-nowrap transition {active
               ? 'border-violet-500 bg-violet-500 text-white'
               : 'border-[var(--hairline)] bg-white/40 hover:bg-white/70 dark:bg-white/5'}"
@@ -89,6 +114,7 @@
         {#if activeDay}
           {@const f = formatDay(activeDay.date)}
           <span class="font-semibold">Day {app.dayNumber(activeDay)}</span>
+          {#if activeDay.id === app.todayDayId}<span class="rounded-full bg-emerald-500 px-1.5 text-[10px] font-bold text-white">Today</span>{/if}
           {#if f}<span class="text-muted">{f.weekday} {f.date}{activeDay.city ? ` · ${activeDay.city}` : ''}</span>{/if}
           <button class="text-muted ml-auto flex items-center gap-1 rounded-lg px-1.5 py-1 hover:bg-slate-500/10" title="Show whole trip (Esc)" onclick={() => app.selectDay(null)}>
             <X class="size-3.5" /> Whole trip

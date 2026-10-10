@@ -1,8 +1,9 @@
 <script lang="ts">
   import { CircleAlert, Maximize } from '@lucide/svelte';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { fade, fly } from 'svelte/transition';
   import { app } from './lib/state.svelte';
+  import { startNavigation } from './lib/navigation.svelte';
   import ActivityList from './lib/components/ActivityList.svelte';
   import DetailDrawer from './lib/components/DetailDrawer.svelte';
   import FieldMapping from './lib/components/FieldMapping.svelte';
@@ -17,6 +18,8 @@
   import ItineraryPanel from './lib/components/ItineraryPanel.svelte';
 
   let mapView: ReturnType<typeof MapView> | undefined = $state();
+  /** Height of the floating mode switch + toolbar on mobile (the map behind it is covered). */
+  let topBarH = $state(56);
   let width = $state(window.innerWidth);
   let height = $state(window.innerHeight);
   const mobile = $derived(width < 960);
@@ -54,7 +57,7 @@
 
   const padding = $derived(
     mobile
-      ? { top: 110, right: 10, bottom: app.selectedActivity ? Math.round(height * 0.62) : sheetPx, left: 10 }
+      ? { top: topBarH + 20, right: 10, bottom: app.selectedActivity ? Math.round(height * 0.62) : sheetPx, left: 10 }
       : { top: 70, right: app.selectedActivity ? 430 : 20, bottom: 30, left: sideW + 26 },
   );
 
@@ -63,7 +66,17 @@
   });
 
   onMount(() => {
+    startNavigation();
     void app.init();
+  });
+
+  // Once the itinerary is first known: preselect today's day if the trip is under way.
+  let todayChecked = false;
+  $effect(() => {
+    if (todayChecked || !app.ready || !app.days.length) return;
+    todayChecked = true;
+    const id = app.todayDayId;
+    if (id && !app.activeDayId) untrack(() => app.selectDay(id, true));
   });
 </script>
 
@@ -76,7 +89,7 @@
   <MapView bind:this={mapView} {padding} />
 
   {#if mobile}
-    <div class="absolute top-3 right-3 left-3 z-20 flex flex-wrap items-start justify-between gap-2">
+    <div class="absolute top-3 right-3 left-3 z-20 flex flex-wrap items-start justify-between gap-2" bind:clientHeight={topBarH}>
       <ModeSwitch compact />
       <Toolbar />
     </div>
@@ -198,7 +211,7 @@
               <div class="mb-3"><Filters /></div>
               <ActivityList />
             {:else}
-              <ItineraryPanel />
+              <ItineraryPanel mobile />
             {/if}
           </div>
         {/key}

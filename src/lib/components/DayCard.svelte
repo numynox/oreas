@@ -17,6 +17,7 @@
     return { weekday: part({ weekday: 'short' }), day: d.getDate(), month: part({ month: 'short' }) };
   });
   const active = $derived(app.activeDayId === day.id);
+  const today = $derived(app.todayDayId === day.id);
   const acts = $derived(day.activityIds.map((id) => app.activities.find((a) => a.id === id)).filter((a) => !!a));
   const missing = $derived(day.activityIds.length - acts.length);
 
@@ -37,7 +38,10 @@
   tabindex="0"
   class="flex scroll-mt-3 gap-3 rounded-2xl border px-2.5 py-2 transition {active
     ? 'border-violet-400/60 bg-white/55 shadow-lg shadow-violet-500/10 dark:bg-white/8'
-    : 'border-transparent hover:bg-white/35 dark:hover:bg-white/5'}"
+    : today
+      ? 'border-emerald-500/50 bg-emerald-500/5 hover:bg-white/35 dark:hover:bg-white/5'
+      : 'border-transparent hover:bg-white/35 dark:hover:bg-white/5'}"
+  aria-current={today ? 'date' : undefined}
   onclick={() => app.selectDay(active ? null : day.id)}
   onkeydown={(e) => e.key === 'Enter' && app.selectDay(active ? null : day.id)}
 >
@@ -45,7 +49,11 @@
     <div
       class="flex w-full flex-col items-center justify-center rounded-xl py-1 text-white shadow-sm transition {active
         ? 'bg-gradient-to-br from-violet-500 to-fuchsia-500'
-        : 'bg-gradient-to-br from-slate-400 to-slate-500 dark:from-slate-600 dark:to-slate-700'}"
+        : today
+          ? 'bg-gradient-to-br from-emerald-500 to-teal-500'
+          : 'bg-gradient-to-br from-slate-400 to-slate-500 dark:from-slate-600 dark:to-slate-700'} {today && active
+        ? 'ring-2 ring-emerald-400 ring-offset-1 ring-offset-transparent'
+        : ''}"
     >
       {#if when}
         <span class="text-[9px] leading-tight font-semibold uppercase opacity-80">{when.weekday}</span>
@@ -55,7 +63,11 @@
         <span class="py-1 text-[9px] leading-tight font-semibold opacity-90">No date</span>
       {/if}
     </div>
-    <span class="text-muted text-[10px] leading-tight">Day {number}</span>
+    {#if today}
+      <span class="text-[10px] leading-tight font-bold text-emerald-600 dark:text-emerald-400">Today</span>
+    {:else}
+      <span class="text-muted text-[10px] leading-tight">Day {number}</span>
+    {/if}
   </div>
 
   <div class="min-w-0 flex-1 space-y-1.5">

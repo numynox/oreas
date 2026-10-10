@@ -100,6 +100,11 @@ function tour(list: Activity[]): Activity[] {
 }
 const UI_KEY = 'oreas:v1:ui';
 
+/** Local calendar date as `YYYY-MM-DD` (the itinerary's date format). */
+function isoDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export function facetValues(a: Activity, k: FacetKey): string[] {
   const v = a[k];
   return v ? [v] : [];
@@ -189,6 +194,10 @@ class AppState {
   lightbox = $state<{ images: AirtableAttachment[]; index: number } | null>(null);
   toasts = $state<Toast[]>([]);
   now = $state(Date.now());
+  /** Local calendar date `YYYY-MM-DD`; follows `now`, so it rolls over at midnight. */
+  today = $derived(isoDate(new Date(this.now)));
+  /** The itinerary day that is today, if the trip is under way. */
+  todayDayId = $derived(this.days.find((d) => d.date === this.today)?.id ?? null);
 
   dark = $derived(this.theme === 'dark' || (this.theme === 'system' && this.systemDark));
 
@@ -631,10 +640,9 @@ class AppState {
     this.selectDay(days[next].id, true);
   }
 
+  /** Switch mode (the URL hash follows via navigation.svelte.ts). */
   setMode(m: Mode) {
     this.mode = m;
-    const hash = m === 'itinerary' ? '#itinerary' : '';
-    if (location.hash !== hash) history.replaceState(null, '', hash || location.pathname + location.search);
   }
 
   /** Jump from an activity to its day in the itinerary. */

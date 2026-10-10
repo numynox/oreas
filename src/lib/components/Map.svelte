@@ -353,24 +353,51 @@
   }
 
   type Pad = { top: number; right: number; bottom: number; left: number };
+  /** Smallest map area (px) a fit is squeezed into. */
+  const MIN_VIEW = 48;
+
   /**
-   * MapLibre silently ignores fitBounds/flyTo when the padding leaves no room on the canvas
-   * (wide itinerary panel + detail drawer on smaller screens). Scale the padding down so that
-   * at least 120 px of map remain visible in each direction.
+   * Padding for fits and fly-tos: the `padding` prop (panels, bottom sheet, toolbar covering the map)
+   * plus a `margin` around the content. MapLibre silently ignores fitBounds/flyTo when the padding
+   * leaves no room on the canvas, so when space is short the margin shrinks first, then the smaller
+   * inset of the axis (toolbar rather than an expanded bottom sheet): the points always land in the
+   * map area that is actually visible, however small.
    */
-  function safePadding(p: Pad): Pad {
+  function viewPadding(margin: number): Pad {
+    const p = padding;
     if (!map) return p;
     const { clientWidth: w, clientHeight: h } = map.getContainer();
-    const sx = Math.min(1, Math.max(0, w - 120) / Math.max(1, p.left + p.right));
-    const sy = Math.min(1, Math.max(0, h - 120) / Math.max(1, p.top + p.bottom));
-    return { left: p.left * sx, right: p.right * sx, top: p.top * sy, bottom: p.bottom * sy };
+    const axis = (size: number, a: number, b: number): [number, number] => {
+      const room = size - a - b;
+      const m = Math.max(0, Math.min(margin, (room - MIN_VIEW) / 2));
+      a += m;
+      b += m;
+      let need = MIN_VIEW - (size - a - b);
+      if (need > 0) {
+        // Shrink the smaller inset first, then the other.
+        const small = Math.min(need, a <= b ? a : b);
+        if (a <= b) a -= small;
+        else b -= small;
+        need -= small;
+        if (need > 0) {
+          if (a > b) a = Math.max(0, a - need);
+          else b = Math.max(0, b - need);
+        }
+      }
+      return [a, b];
+    };
+    const [left, right] = axis(w, p.left, p.right);
+    const [top, bottom] = axis(h, p.top, p.bottom);
+    return { top, right, bottom, left };
   }
 
   function fitBounds(b: maplibregl.LngLatBounds, maxZoom: number, animate: boolean) {
     if (!map || b.isEmpty()) return;
-    const pad = safePadding({ top: padding.top + 60, right: padding.right + 60, bottom: padding.bottom + 60, left: padding.left + 60 });
-    map.fitBounds(b, { padding: pad, maxZoom, duration: animate ? 900 : 0 });
+    map.fitBounds(b, { padding: viewPadding(mobile() ? 28 : 60), maxZoom, duration: animate ? 900 : 0 });
   }
+
+  /** Narrow screens: less margin around fitted content. */
+  const mobile = () => !!map && map.getContainer().clientWidth < 600;
 
   function fitToData(animate = true) {
     const b = new maplibregl.LngLatBounds();
@@ -638,7 +665,7 @@
       untrack(() => {
         // Use an offset, not `padding`: padding passed to flyTo persists on the map and is added
         // to every later fitBounds padding, so day fits would no longer fit the canvas.
-        const p = safePadding(padding);
+        const p = viewPadding(0);
         map!.flyTo({
           center: [a.lng!, a.lat!],
           zoom: Math.max(map!.getZoom(), app.mode === 'itinerary' ? 11 : 12),
