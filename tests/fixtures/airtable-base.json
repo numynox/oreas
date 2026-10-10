@@ -1,0 +1,1856 @@
+{
+ "description": "Mock Airtable base for Oreas: API responses for the schema and both tables. Itinerary dates are {{today±N}} tokens (see airtable.mjs).",
+ "baseId": "appTEST0000000000",
+ "schema": {
+  "tables": [
+   {
+    "id": "tblActs",
+    "name": "Activities",
+    "primaryFieldId": "fldAName",
+    "fields": [
+     {
+      "id": "fldAName",
+      "name": "Name",
+      "type": "singleLineText"
+     },
+     {
+      "id": "fldALat",
+      "name": "Latitude",
+      "type": "number"
+     },
+     {
+      "id": "fldALng",
+      "name": "Longitude",
+      "type": "number"
+     },
+     {
+      "id": "fldAType",
+      "name": "Activity type",
+      "type": "singleSelect",
+      "options": {
+       "choices": [
+        {
+         "id": "sel0",
+         "name": "Temple",
+         "color": "blueLight2"
+        },
+        {
+         "id": "sel1",
+         "name": "Museum",
+         "color": "blueLight2"
+        },
+        {
+         "id": "sel2",
+         "name": "Food",
+         "color": "blueLight2"
+        },
+        {
+         "id": "sel3",
+         "name": "Nature",
+         "color": "blueLight2"
+        },
+        {
+         "id": "sel4",
+         "name": "Viewpoint",
+         "color": "blueLight2"
+        }
+       ]
+      }
+     },
+     {
+      "id": "fldARegion",
+      "name": "Region",
+      "type": "singleLineText"
+     },
+     {
+      "id": "fldAStatus",
+      "name": "Status",
+      "type": "singleSelect",
+      "options": {
+       "choices": [
+        {
+         "id": "selS",
+         "name": "Idea",
+         "color": "grayLight2"
+        }
+       ]
+      }
+     },
+     {
+      "id": "fldANotes",
+      "name": "Notes",
+      "type": "multilineText"
+     },
+     {
+      "id": "fldAAtt",
+      "name": "Attachments",
+      "type": "multipleAttachments"
+     },
+     {
+      "id": "fldALoc",
+      "name": "Location",
+      "type": "singleLineText"
+     },
+     {
+      "id": "fldAPrio",
+      "name": "Priority",
+      "type": "singleSelect",
+      "options": {
+       "choices": [
+        {
+         "id": "selP0",
+         "name": "Must",
+         "color": "redLight2"
+        },
+        {
+         "id": "selP1",
+         "name": "High",
+         "color": "redLight2"
+        },
+        {
+         "id": "selP2",
+         "name": "Maybe",
+         "color": "redLight2"
+        }
+       ]
+      }
+     },
+     {
+      "id": "fldAAccess",
+      "name": "Access by",
+      "type": "singleSelect",
+      "options": {
+       "choices": [
+        {
+         "id": "selX0",
+         "name": "Train",
+         "color": "greenLight2"
+        },
+        {
+         "id": "selX1",
+         "name": "Walk",
+         "color": "greenLight2"
+        },
+        {
+         "id": "selX2",
+         "name": "Bus",
+         "color": "greenLight2"
+        }
+       ]
+      }
+     },
+     {
+      "id": "fldADur",
+      "name": "Est. Duration",
+      "type": "duration",
+      "options": {
+       "durationFormat": "h:mm"
+      }
+     },
+     {
+      "id": "fldACost",
+      "name": "Est. Cost (per person)",
+      "type": "currency",
+      "options": {
+       "precision": 0,
+       "symbol": "¥"
+      }
+     },
+     {
+      "id": "fldABook",
+      "name": "Booking Required",
+      "type": "checkbox",
+      "options": {
+       "icon": "check",
+       "color": "greenBright"
+      }
+     },
+     {
+      "id": "fldAUrl",
+      "name": "Website / Booking Link",
+      "type": "url"
+     }
+    ]
+   },
+   {
+    "id": "tblDays",
+    "name": "Itinerary",
+    "primaryFieldId": "fldDTitle",
+    "fields": [
+     {
+      "id": "fldDTitle",
+      "name": "Day Title",
+      "type": "singleLineText"
+     },
+     {
+      "id": "fldDDate",
+      "name": "Date",
+      "type": "date"
+     },
+     {
+      "id": "fldDCity",
+      "name": "Overnight city",
+      "type": "singleLineText"
+     },
+     {
+      "id": "fldDAcc",
+      "name": "Accommodation",
+      "type": "singleLineText"
+     },
+     {
+      "id": "fldDTravel",
+      "name": "Travel",
+      "type": "singleLineText"
+     },
+     {
+      "id": "fldDActs",
+      "name": "Activities",
+      "type": "multipleRecordLinks",
+      "options": {
+       "linkedTableId": "tblActs"
+      }
+     },
+     {
+      "id": "fldDNotes",
+      "name": "Notes",
+      "type": "multilineText"
+     },
+     {
+      "id": "fldDTd",
+      "name": "Travel details",
+      "type": "singleLineText"
+     },
+     {
+      "id": "fldDPhoto",
+      "name": "Photo spots",
+      "type": "multilineText"
+     },
+     {
+      "id": "fldDLat",
+      "name": "Overnight Latitude",
+      "type": "number"
+     },
+     {
+      "id": "fldDLng",
+      "name": "Overnight Longitude",
+      "type": "number"
+     }
+    ]
+   }
+  ]
+ },
+ "records": {
+  "tblActs": [
+   {
+    "id": "recA0000000000000",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Tokyo sight 1",
+     "fldALat": 35.68,
+     "fldALng": 139.79999999999998,
+     "fldAType": "Temple",
+     "fldARegion": "Tokyo",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Tokyo sight 1.",
+     "fldALoc": "1-chome, Tokyo",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 0,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/0",
+     "fldAAtt": [
+      {
+       "id": "att0",
+       "url": "https://dl.airtable.test/0.jpg",
+       "filename": "0.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/0-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/0-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000001",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Tokyo sight 2",
+     "fldALat": 35.70974994431357,
+     "fldALng": 139.77069995314497,
+     "fldAType": "Museum",
+     "fldARegion": "Tokyo",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Tokyo sight 2.",
+     "fldALoc": "2-chome, Tokyo",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/1"
+    }
+   },
+   {
+    "id": "recA0000000000002",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Tokyo sight 3",
+     "fldALat": 35.6723337669392,
+     "fldALng": 139.72572444986523,
+     "fldAType": "Food",
+     "fldARegion": "Tokyo",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Tokyo sight 3.",
+     "fldALoc": "3-chome, Tokyo",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 1000,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/2",
+     "fldAAtt": [
+      {
+       "id": "att2",
+       "url": "https://dl.airtable.test/2.jpg",
+       "filename": "2.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/2-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/2-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000003",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Tokyo sight 4",
+     "fldALat": 35.652225559530166,
+     "fldALng": 139.730962707832,
+     "fldAType": "Nature",
+     "fldARegion": "Tokyo",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Tokyo sight 4.",
+     "fldALoc": "4-chome, Tokyo",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 1500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/3"
+    }
+   },
+   {
+    "id": "recA0000000000004",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Tokyo sight 5",
+     "fldALat": 35.694823400534155,
+     "fldALng": 139.778740666852,
+     "fldAType": "Viewpoint",
+     "fldARegion": "Tokyo",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Tokyo sight 5.",
+     "fldALoc": "5-chome, Tokyo",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 2000,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/4",
+     "fldAAtt": [
+      {
+       "id": "att4",
+       "url": "https://dl.airtable.test/4.jpg",
+       "filename": "4.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/4-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/4-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000005",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Tokyo sight 6",
+     "fldALat": 35.703954613378706,
+     "fldALng": 139.79906350502912,
+     "fldAType": "Temple",
+     "fldARegion": "Tokyo",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Tokyo sight 6.",
+     "fldALoc": "6-chome, Tokyo",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 2500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/5"
+    }
+   },
+   {
+    "id": "recA0000000000006",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Hakone sight 1",
+     "fldALat": 35.23,
+     "fldALng": 139.06,
+     "fldAType": "Museum",
+     "fldARegion": "Hakone",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Hakone sight 1.",
+     "fldALoc": "1-chome, Hakone",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 0,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/6",
+     "fldAAtt": [
+      {
+       "id": "att6",
+       "url": "https://dl.airtable.test/6.jpg",
+       "filename": "6.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/6-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/6-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000007",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Hakone sight 2",
+     "fldALat": 35.25974994431357,
+     "fldALng": 139.030699953145,
+     "fldAType": "Food",
+     "fldARegion": "Hakone",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Hakone sight 2.",
+     "fldALoc": "2-chome, Hakone",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/7"
+    }
+   },
+   {
+    "id": "recA0000000000008",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Hakone sight 3",
+     "fldALat": 35.222333766939194,
+     "fldALng": 138.98572444986524,
+     "fldAType": "Nature",
+     "fldARegion": "Hakone",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Hakone sight 3.",
+     "fldALoc": "3-chome, Hakone",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 1000,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/8",
+     "fldAAtt": [
+      {
+       "id": "att8",
+       "url": "https://dl.airtable.test/8.jpg",
+       "filename": "8.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/8-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/8-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000009",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Hakone sight 4",
+     "fldALat": 35.20222555953016,
+     "fldALng": 138.990962707832,
+     "fldAType": "Viewpoint",
+     "fldARegion": "Hakone",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Hakone sight 4.",
+     "fldALoc": "4-chome, Hakone",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 1500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/9"
+    }
+   },
+   {
+    "id": "recA0000000000010",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Hakone sight 5",
+     "fldALat": 35.24482340053415,
+     "fldALng": 139.03874066685202,
+     "fldAType": "Temple",
+     "fldARegion": "Hakone",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Hakone sight 5.",
+     "fldALoc": "5-chome, Hakone",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 2000,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/10",
+     "fldAAtt": [
+      {
+       "id": "att10",
+       "url": "https://dl.airtable.test/10.jpg",
+       "filename": "10.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/10-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/10-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000011",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Hakone sight 6",
+     "fldALat": 35.2539546133787,
+     "fldALng": 139.05906350502914,
+     "fldAType": "Museum",
+     "fldARegion": "Hakone",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Hakone sight 6.",
+     "fldALoc": "6-chome, Hakone",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 2500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/11"
+    }
+   },
+   {
+    "id": "recA0000000000012",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Matsumoto sight 1",
+     "fldALat": 36.24,
+     "fldALng": 138.01,
+     "fldAType": "Food",
+     "fldARegion": "Matsumoto",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Matsumoto sight 1.",
+     "fldALoc": "1-chome, Matsumoto",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 0,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/12",
+     "fldAAtt": [
+      {
+       "id": "att12",
+       "url": "https://dl.airtable.test/12.jpg",
+       "filename": "12.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/12-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/12-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000013",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Matsumoto sight 2",
+     "fldALat": 36.269749944313574,
+     "fldALng": 137.98069995314498,
+     "fldAType": "Nature",
+     "fldARegion": "Matsumoto",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Matsumoto sight 2.",
+     "fldALoc": "2-chome, Matsumoto",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/13"
+    }
+   },
+   {
+    "id": "recA0000000000014",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Matsumoto sight 3",
+     "fldALat": 36.2323337669392,
+     "fldALng": 137.93572444986523,
+     "fldAType": "Viewpoint",
+     "fldARegion": "Matsumoto",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Matsumoto sight 3.",
+     "fldALoc": "3-chome, Matsumoto",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 1000,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/14",
+     "fldAAtt": [
+      {
+       "id": "att14",
+       "url": "https://dl.airtable.test/14.jpg",
+       "filename": "14.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/14-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/14-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000015",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Matsumoto sight 4",
+     "fldALat": 36.21222555953017,
+     "fldALng": 137.940962707832,
+     "fldAType": "Temple",
+     "fldARegion": "Matsumoto",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Matsumoto sight 4.",
+     "fldALoc": "4-chome, Matsumoto",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 1500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/15"
+    }
+   },
+   {
+    "id": "recA0000000000016",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Matsumoto sight 5",
+     "fldALat": 36.25482340053416,
+     "fldALng": 137.988740666852,
+     "fldAType": "Museum",
+     "fldARegion": "Matsumoto",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Matsumoto sight 5.",
+     "fldALoc": "5-chome, Matsumoto",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 2000,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/16",
+     "fldAAtt": [
+      {
+       "id": "att16",
+       "url": "https://dl.airtable.test/16.jpg",
+       "filename": "16.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/16-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/16-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000017",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Matsumoto sight 6",
+     "fldALat": 36.26395461337871,
+     "fldALng": 138.00906350502913,
+     "fldAType": "Food",
+     "fldARegion": "Matsumoto",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Matsumoto sight 6.",
+     "fldALoc": "6-chome, Matsumoto",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 2500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/17"
+    }
+   },
+   {
+    "id": "recA0000000000018",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Kanazawa sight 1",
+     "fldALat": 36.56,
+     "fldALng": 136.69,
+     "fldAType": "Nature",
+     "fldARegion": "Kanazawa",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Kanazawa sight 1.",
+     "fldALoc": "1-chome, Kanazawa",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 0,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/18",
+     "fldAAtt": [
+      {
+       "id": "att18",
+       "url": "https://dl.airtable.test/18.jpg",
+       "filename": "18.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/18-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/18-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000019",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Kanazawa sight 2",
+     "fldALat": 36.589749944313574,
+     "fldALng": 136.66069995314498,
+     "fldAType": "Viewpoint",
+     "fldARegion": "Kanazawa",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Kanazawa sight 2.",
+     "fldALoc": "2-chome, Kanazawa",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/19"
+    }
+   },
+   {
+    "id": "recA0000000000020",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Kanazawa sight 3",
+     "fldALat": 36.5523337669392,
+     "fldALng": 136.61572444986524,
+     "fldAType": "Temple",
+     "fldARegion": "Kanazawa",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Kanazawa sight 3.",
+     "fldALoc": "3-chome, Kanazawa",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 1000,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/20",
+     "fldAAtt": [
+      {
+       "id": "att20",
+       "url": "https://dl.airtable.test/20.jpg",
+       "filename": "20.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/20-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/20-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000021",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Kanazawa sight 4",
+     "fldALat": 36.53222555953017,
+     "fldALng": 136.620962707832,
+     "fldAType": "Museum",
+     "fldARegion": "Kanazawa",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Kanazawa sight 4.",
+     "fldALoc": "4-chome, Kanazawa",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 1500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/21"
+    }
+   },
+   {
+    "id": "recA0000000000022",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Kanazawa sight 5",
+     "fldALat": 36.57482340053416,
+     "fldALng": 136.66874066685202,
+     "fldAType": "Food",
+     "fldARegion": "Kanazawa",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Kanazawa sight 5.",
+     "fldALoc": "5-chome, Kanazawa",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 2000,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/22",
+     "fldAAtt": [
+      {
+       "id": "att22",
+       "url": "https://dl.airtable.test/22.jpg",
+       "filename": "22.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/22-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/22-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000023",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Kanazawa sight 6",
+     "fldALat": 36.58395461337871,
+     "fldALng": 136.68906350502914,
+     "fldAType": "Nature",
+     "fldARegion": "Kanazawa",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Kanazawa sight 6.",
+     "fldALoc": "6-chome, Kanazawa",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 2500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/23"
+    }
+   },
+   {
+    "id": "recA0000000000024",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Kyoto sight 1",
+     "fldALat": 35.01,
+     "fldALng": 135.81,
+     "fldAType": "Viewpoint",
+     "fldARegion": "Kyoto",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Kyoto sight 1.",
+     "fldALoc": "1-chome, Kyoto",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 0,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/24",
+     "fldAAtt": [
+      {
+       "id": "att24",
+       "url": "https://dl.airtable.test/24.jpg",
+       "filename": "24.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/24-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/24-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000025",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Kyoto sight 2",
+     "fldALat": 35.03974994431357,
+     "fldALng": 135.780699953145,
+     "fldAType": "Temple",
+     "fldARegion": "Kyoto",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Kyoto sight 2.",
+     "fldALoc": "2-chome, Kyoto",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/25"
+    }
+   },
+   {
+    "id": "recA0000000000026",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Kyoto sight 3",
+     "fldALat": 35.002333766939195,
+     "fldALng": 135.73572444986524,
+     "fldAType": "Museum",
+     "fldARegion": "Kyoto",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Kyoto sight 3.",
+     "fldALoc": "3-chome, Kyoto",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 1000,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/26",
+     "fldAAtt": [
+      {
+       "id": "att26",
+       "url": "https://dl.airtable.test/26.jpg",
+       "filename": "26.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/26-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/26-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000027",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Kyoto sight 4",
+     "fldALat": 34.982225559530164,
+     "fldALng": 135.740962707832,
+     "fldAType": "Food",
+     "fldARegion": "Kyoto",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Kyoto sight 4.",
+     "fldALoc": "4-chome, Kyoto",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 1500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/27"
+    }
+   },
+   {
+    "id": "recA0000000000028",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Kyoto sight 5",
+     "fldALat": 35.02482340053415,
+     "fldALng": 135.78874066685202,
+     "fldAType": "Nature",
+     "fldARegion": "Kyoto",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Kyoto sight 5.",
+     "fldALoc": "5-chome, Kyoto",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 2000,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/28",
+     "fldAAtt": [
+      {
+       "id": "att28",
+       "url": "https://dl.airtable.test/28.jpg",
+       "filename": "28.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/28-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/28-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000029",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Kyoto sight 6",
+     "fldALat": 35.033954613378704,
+     "fldALng": 135.80906350502914,
+     "fldAType": "Viewpoint",
+     "fldARegion": "Kyoto",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Kyoto sight 6.",
+     "fldALoc": "6-chome, Kyoto",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 2500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/29"
+    }
+   },
+   {
+    "id": "recA0000000000030",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Nara sight 1",
+     "fldALat": 34.68,
+     "fldALng": 135.84,
+     "fldAType": "Temple",
+     "fldARegion": "Nara",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Nara sight 1.",
+     "fldALoc": "1-chome, Nara",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 0,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/30",
+     "fldAAtt": [
+      {
+       "id": "att30",
+       "url": "https://dl.airtable.test/30.jpg",
+       "filename": "30.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/30-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/30-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000031",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Nara sight 2",
+     "fldALat": 34.70974994431357,
+     "fldALng": 135.810699953145,
+     "fldAType": "Museum",
+     "fldARegion": "Nara",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Nara sight 2.",
+     "fldALoc": "2-chome, Nara",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/31"
+    }
+   },
+   {
+    "id": "recA0000000000032",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Nara sight 3",
+     "fldALat": 34.6723337669392,
+     "fldALng": 135.76572444986525,
+     "fldAType": "Food",
+     "fldARegion": "Nara",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Nara sight 3.",
+     "fldALoc": "3-chome, Nara",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 1000,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/32",
+     "fldAAtt": [
+      {
+       "id": "att32",
+       "url": "https://dl.airtable.test/32.jpg",
+       "filename": "32.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/32-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/32-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000033",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Nara sight 4",
+     "fldALat": 34.652225559530166,
+     "fldALng": 135.770962707832,
+     "fldAType": "Nature",
+     "fldARegion": "Nara",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Nara sight 4.",
+     "fldALoc": "4-chome, Nara",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 1500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/33"
+    }
+   },
+   {
+    "id": "recA0000000000034",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Nara sight 5",
+     "fldALat": 34.694823400534155,
+     "fldALng": 135.81874066685202,
+     "fldAType": "Viewpoint",
+     "fldARegion": "Nara",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Nara sight 5.",
+     "fldALoc": "5-chome, Nara",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 2000,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/34",
+     "fldAAtt": [
+      {
+       "id": "att34",
+       "url": "https://dl.airtable.test/34.jpg",
+       "filename": "34.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/34-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/34-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000035",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Nara sight 6",
+     "fldALat": 34.703954613378706,
+     "fldALng": 135.83906350502915,
+     "fldAType": "Temple",
+     "fldARegion": "Nara",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Nara sight 6.",
+     "fldALoc": "6-chome, Nara",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 2500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/35"
+    }
+   },
+   {
+    "id": "recA0000000000036",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Osaka sight 1",
+     "fldALat": 34.69,
+     "fldALng": 135.54,
+     "fldAType": "Museum",
+     "fldARegion": "Osaka",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Osaka sight 1.",
+     "fldALoc": "1-chome, Osaka",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 0,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/36",
+     "fldAAtt": [
+      {
+       "id": "att36",
+       "url": "https://dl.airtable.test/36.jpg",
+       "filename": "36.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/36-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/36-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000037",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Osaka sight 2",
+     "fldALat": 34.71974994431357,
+     "fldALng": 135.51069995314498,
+     "fldAType": "Food",
+     "fldARegion": "Osaka",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Osaka sight 2.",
+     "fldALoc": "2-chome, Osaka",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/37"
+    }
+   },
+   {
+    "id": "recA0000000000038",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Osaka sight 3",
+     "fldALat": 34.682333766939195,
+     "fldALng": 135.46572444986523,
+     "fldAType": "Nature",
+     "fldARegion": "Osaka",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Osaka sight 3.",
+     "fldALoc": "3-chome, Osaka",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 1000,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/38",
+     "fldAAtt": [
+      {
+       "id": "att38",
+       "url": "https://dl.airtable.test/38.jpg",
+       "filename": "38.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/38-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/38-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000039",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Osaka sight 4",
+     "fldALat": 34.662225559530164,
+     "fldALng": 135.470962707832,
+     "fldAType": "Viewpoint",
+     "fldARegion": "Osaka",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Osaka sight 4.",
+     "fldALoc": "4-chome, Osaka",
+     "fldAPrio": "Must",
+     "fldAAccess": "Train",
+     "fldADur": 3600,
+     "fldACost": 1500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/39"
+    }
+   },
+   {
+    "id": "recA0000000000040",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Osaka sight 5",
+     "fldALat": 34.70482340053415,
+     "fldALng": 135.518740666852,
+     "fldAType": "Temple",
+     "fldARegion": "Osaka",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Osaka sight 5.",
+     "fldALoc": "5-chome, Osaka",
+     "fldAPrio": "High",
+     "fldAAccess": "Walk",
+     "fldADur": 7200,
+     "fldACost": 2000,
+     "fldABook": true,
+     "fldAUrl": "https://example.com/40",
+     "fldAAtt": [
+      {
+       "id": "att40",
+       "url": "https://dl.airtable.test/40.jpg",
+       "filename": "40.jpg",
+       "type": "image/jpeg",
+       "width": 400,
+       "height": 300,
+       "thumbnails": {
+        "small": {
+         "url": "https://dl.airtable.test/40-s.jpg",
+         "width": 48,
+         "height": 36
+        },
+        "large": {
+         "url": "https://dl.airtable.test/40-l.jpg",
+         "width": 400,
+         "height": 300
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "recA0000000000041",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldAName": "Osaka sight 6",
+     "fldALat": 34.713954613378704,
+     "fldALng": 135.53906350502913,
+     "fldAType": "Museum",
+     "fldARegion": "Osaka",
+     "fldAStatus": "Idea",
+     "fldANotes": "Notes for Osaka sight 6.",
+     "fldALoc": "6-chome, Osaka",
+     "fldAPrio": "Maybe",
+     "fldAAccess": "Bus",
+     "fldADur": 10800,
+     "fldACost": 2500,
+     "fldABook": false,
+     "fldAUrl": "https://example.com/41"
+    }
+   }
+  ],
+  "tblDays": [
+   {
+    "id": "recD0000000000000",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today-4}}",
+     "fldDTitle": "Arrive in Tokyo",
+     "fldDCity": "Tokyo",
+     "fldDAcc": "Hotel Tokyo",
+     "fldDActs": [
+      "recA0000000000000",
+      "recA0000000000001"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDLat": 35.68,
+     "fldDLng": 139.76
+    }
+   },
+   {
+    "id": "recD0000000000001",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today-3}}",
+     "fldDTitle": "Tokyo day 2",
+     "fldDCity": "Tokyo",
+     "fldDAcc": "Hotel Tokyo",
+     "fldDActs": [
+      "recA0000000000002",
+      "recA0000000000003",
+      "recA0000000000004"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDLat": 35.68,
+     "fldDLng": 139.76
+    }
+   },
+   {
+    "id": "recD0000000000002",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today-2}}",
+     "fldDTitle": "Tokyo day 3",
+     "fldDCity": "Tokyo",
+     "fldDAcc": "Hotel Tokyo",
+     "fldDActs": [
+      "recA0000000000004",
+      "recA0000000000005"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDLat": 35.68,
+     "fldDLng": 139.76
+    }
+   },
+   {
+    "id": "recD0000000000003",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today-1}}",
+     "fldDTitle": "Arrive in Hakone",
+     "fldDCity": "Hakone",
+     "fldDAcc": "Hotel Hakone",
+     "fldDTravel": "Train to Hakone",
+     "fldDActs": [
+      "recA0000000000006",
+      "recA0000000000007"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDTd": "Limited express, 2h, reserved seats",
+     "fldDLat": 35.23,
+     "fldDLng": 139.02
+    }
+   },
+   {
+    "id": "recD0000000000004",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today+0}}",
+     "fldDTitle": "Hakone day 2",
+     "fldDCity": "Hakone",
+     "fldDAcc": "Hotel Hakone",
+     "fldDActs": [
+      "recA0000000000008",
+      "recA0000000000009",
+      "recA0000000000010"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDLat": 35.23,
+     "fldDLng": 139.02
+    }
+   },
+   {
+    "id": "recD0000000000005",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today+1}}",
+     "fldDTitle": "Arrive in Matsumoto",
+     "fldDCity": "Matsumoto",
+     "fldDAcc": "Hotel Matsumoto",
+     "fldDTravel": "Train to Matsumoto",
+     "fldDActs": [
+      "recA0000000000012",
+      "recA0000000000013"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDTd": "Limited express, 2h, reserved seats",
+     "fldDLat": 36.24,
+     "fldDLng": 137.97
+    }
+   },
+   {
+    "id": "recD0000000000006",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today+2}}",
+     "fldDTitle": "Matsumoto day 2",
+     "fldDCity": "Matsumoto",
+     "fldDAcc": "Hotel Matsumoto",
+     "fldDActs": [
+      "recA0000000000014",
+      "recA0000000000015",
+      "recA0000000000016"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDLat": 36.24,
+     "fldDLng": 137.97
+    }
+   },
+   {
+    "id": "recD0000000000007",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today+3}}",
+     "fldDTitle": "Arrive in Kanazawa",
+     "fldDCity": "Kanazawa",
+     "fldDAcc": "Hotel Kanazawa",
+     "fldDTravel": "Train to Kanazawa",
+     "fldDActs": [
+      "recA0000000000018",
+      "recA0000000000019"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDTd": "Limited express, 2h, reserved seats",
+     "fldDLat": 36.56,
+     "fldDLng": 136.65
+    }
+   },
+   {
+    "id": "recD0000000000008",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today+4}}",
+     "fldDTitle": "Kanazawa day 2",
+     "fldDCity": "Kanazawa",
+     "fldDAcc": "Hotel Kanazawa",
+     "fldDActs": [
+      "recA0000000000020",
+      "recA0000000000021",
+      "recA0000000000022"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDLat": 36.56,
+     "fldDLng": 136.65
+    }
+   },
+   {
+    "id": "recD0000000000009",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today+5}}",
+     "fldDTitle": "Arrive in Kyoto",
+     "fldDCity": "Kyoto",
+     "fldDAcc": "Hotel Kyoto",
+     "fldDTravel": "Train to Kyoto",
+     "fldDActs": [
+      "recA0000000000024",
+      "recA0000000000025"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDTd": "Limited express, 2h, reserved seats",
+     "fldDLat": 35.01,
+     "fldDLng": 135.77
+    }
+   },
+   {
+    "id": "recD0000000000010",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today+6}}",
+     "fldDTitle": "Kyoto day 2",
+     "fldDCity": "Kyoto",
+     "fldDAcc": "Hotel Kyoto",
+     "fldDActs": [
+      "recA0000000000026",
+      "recA0000000000027",
+      "recA0000000000028"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDLat": 35.01,
+     "fldDLng": 135.77
+    }
+   },
+   {
+    "id": "recD0000000000011",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today+7}}",
+     "fldDTitle": "Kyoto day 3",
+     "fldDCity": "Kyoto",
+     "fldDAcc": "Hotel Kyoto",
+     "fldDActs": [
+      "recA0000000000028",
+      "recA0000000000029"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDLat": 35.01,
+     "fldDLng": 135.77
+    }
+   },
+   {
+    "id": "recD0000000000012",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today+8}}",
+     "fldDTitle": "Arrive in Nara",
+     "fldDCity": "Nara",
+     "fldDAcc": "Hotel Nara",
+     "fldDTravel": "Train to Nara",
+     "fldDActs": [
+      "recA0000000000030",
+      "recA0000000000031"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDTd": "Limited express, 2h, reserved seats",
+     "fldDLat": 34.68,
+     "fldDLng": 135.8
+    }
+   },
+   {
+    "id": "recD0000000000013",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today+9}}",
+     "fldDTitle": "Arrive in Osaka",
+     "fldDCity": "Osaka",
+     "fldDAcc": "Hotel Osaka",
+     "fldDTravel": "Train to Osaka",
+     "fldDActs": [
+      "recA0000000000036",
+      "recA0000000000037"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDTd": "Limited express, 2h, reserved seats",
+     "fldDLat": 34.69,
+     "fldDLng": 135.5
+    }
+   },
+   {
+    "id": "recD0000000000014",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today+10}}",
+     "fldDTitle": "Osaka day 2",
+     "fldDCity": "Osaka",
+     "fldDAcc": "Hotel Osaka",
+     "fldDActs": [
+      "recA0000000000038",
+      "recA0000000000039",
+      "recA0000000000040"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDLat": 34.69,
+     "fldDLng": 135.5
+    }
+   },
+   {
+    "id": "recD0000000000015",
+    "createdTime": "2026-01-01T00:00:00.000Z",
+    "fields": {
+     "fldDDate": "{{today+11}}",
+     "fldDTitle": "Osaka day 3",
+     "fldDCity": "Osaka",
+     "fldDAcc": "Hotel Osaka",
+     "fldDActs": [
+      "recA0000000000040",
+      "recA0000000000041"
+     ],
+     "fldDNotes": "Day notes.",
+     "fldDPhoto": "Sunset spot by the river.",
+     "fldDLat": 34.69,
+     "fldDLng": 135.5
+    }
+   }
+  ]
+ }
+}
