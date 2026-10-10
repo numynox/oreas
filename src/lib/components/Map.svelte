@@ -40,6 +40,9 @@
 
   const placed = $derived(app.filtered.filter((a) => a.lat !== undefined && a.lng !== undefined));
 
+  /** Activities scheduled on any itinerary day (outlined differently in explore). */
+  const planned = $derived(new Set(app.days.flatMap((d) => d.activityIds)));
+
   function collection(list: Activity[]): GeoJSON.FeatureCollection<GeoJSON.Point> {
     return {
       type: 'FeatureCollection',
@@ -47,7 +50,7 @@
         type: 'Feature',
         id: a.id,
         geometry: { type: 'Point', coordinates: [a.lng!, a.lat!] },
-        properties: { id: a.id, name: a.name, color: app.colorOf(a) },
+        properties: { id: a.id, name: a.name, color: app.colorOf(a), planned: planned.has(a.id) ? 1 : 0 },
       })),
     };
   }
@@ -183,8 +186,14 @@
     const stop = (normal: number): Expr => ['case', SELECTED, normal * 1.6 + 2, HOVER, normal * 1.4, normal];
     return ['interpolate', ['linear'], ['zoom'], 4, stop(3), 7, stop(4.5), 10, stop(6.5), 13, stop(8.5)];
   }
+  const PLANNED: Expr = ['==', ['get', 'planned'], 1];
+  /** Itinerary items get a thick solid outline (contrasting with the basemap); the rest a thin faint one. */
   function strokeWidth(): Expr {
-    return ['interpolate', ['linear'], ['zoom'], 4, ['case', SELECTED, 2.5, 1], 10, ['case', SELECTED, 4, 2]];
+    return [
+      'interpolate', ['linear'], ['zoom'],
+      4, ['case', SELECTED, 2.5, PLANNED, 2, 0.8],
+      10, ['case', SELECTED, 4, PLANNED, 3.5, 1.5],
+    ];
   }
 
   function addOverlays() {
@@ -205,8 +214,8 @@
         'circle-color': ['get', 'color'],
         'circle-radius': radius(),
         'circle-stroke-width': strokeWidth(),
-        'circle-stroke-color': '#ffffff',
-        'circle-stroke-opacity': 0.9,
+        'circle-stroke-color': ['case', SELECTED, '#ffffff', PLANNED, baseDark ? '#ffffff' : '#1e293b', '#ffffff'],
+        'circle-stroke-opacity': ['case', SELECTED, 0.9, PLANNED, 1, 0.4],
       },
     });
     map.addLayer({
