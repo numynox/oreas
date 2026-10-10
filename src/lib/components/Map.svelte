@@ -457,30 +457,103 @@
       app.hoveredId = null;
       hoverPopup?.remove();
     };
-    const onClick = (e: MapLayerMouseEvent) => {
-      const id = e.features?.[0]?.properties.id;
-      if (id) {
-        hoverPopup?.remove();
-        app.selectedId = String(id);
-      }
-    };
     for (const layer of POINT_LAYERS) {
       map.on('mousemove', layer, onMove);
       map.on('mouseleave', layer, onLeave);
-      map.on('click', layer, onClick);
     }
     map.on('mouseenter', 'stops', () => map && (map.getCanvas().style.cursor = 'pointer'));
     map.on('mouseleave', 'stops', () => map && (map.getCanvas().style.cursor = ''));
-    map.on('click', 'stops', (e: MapLayerMouseEvent) => {
-      const st = tripStays[Number(e.features?.[0]?.properties.stay)];
-      if (!st) return;
-      app.selectStay(st.dayIds, true);
-    });
+
+    // ---- taps ----
+    // Fingers are imprecise and dots are small: a tap selects the nearest marker within a forgiving
+    // radius instead of requiring an exact hit. MapLibre already drops "clicks" that moved (pans);
+    // on top of that, a tap that only stops a moving map (fling, zoom animation) or ends a pinch
+    // selects nothing and keeps the current selection. Touch taps wait briefly so the first tap of a
+    // double-tap zoom does not select anything either.
+    const canvasEl = map.getCanvasContainer();
+    const down = new Set<number>();
+    let tap = { type: 'mouse', settling: false, multi: false, moved: false };
+    let pendingTap: ReturnType<typeof setTimeout> | undefined;
+    let moving = false;
+    canvasEl.addEventListener(
+      'pointerdown',
+      (e) => {
+        // Capture phase: runs before MapLibre stops the running animation.
+        clearTimeout(pendingTap);
+        if (!down.size) tap = { type: e.pointerType || 'mouse', settling: moving, multi: false, moved: false };
+        down.add(e.pointerId);
+        if (down.size > 1) tap.multi = true;
+      },
+      true,
+    );
+    for (const type of ['pointerup', 'pointercancel'] as const) {
+      canvasEl.addEventListener(type, (e) => down.delete(e.pointerId), true);
+    }
+
+    const onTap = (point: maplibregl.Point, type: string) => {
+      const hit = pick(point, TAP_RADIUS[type] ?? TAP_RADIUS.mouse);
+      if (!hit) {
+        app.selectedId = null;
+      } else if (hit.layer.id === 'stops') {
+        const st = tripStays[Number(hit.properties.stay)];
+        if (st) app.selectStay(st.dayIds, true);
+      } else {
+        hoverPopup?.remove();
+        app.selectedId = String(hit.properties.id);
+      }
+    };
     map.on('click', (e) => {
-      const hits = map!.queryRenderedFeatures(e.point, { layers: [...POINT_LAYERS, 'stops'] });
-      if (!hits.length) app.selectedId = null;
+      if (!map || tap.settling || tap.multi || tap.moved) return;
+      const { type } = tap;
+      if (type === 'touch') pendingTap = setTimeout(() => onTap(e.point, type), DOUBLE_TAP_MS);
+      else onTap(e.point, type);
     });
+    map.on('movestart', () => {
+      // The camera moved during this tap (e.g. a double-tap zoom, which starts before its click).
+      moving = tap.moved = true;
+      clearTimeout(pendingTap);
+    });
+    map.on('moveend', () => (moving = false));
   });
+
+  /** A second tap within this time is a double-tap zoom, not a selection. */
+  const DOUBLE_TAP_MS = 250;
+  /** Extra hit radius (css px) around markers, by pointer type. */
+  const TAP_RADIUS: Record<string, number> = { touch: 24, pen: 14, mouse: 6 };
+
+  /**
+   * The marker a tap at `point` means: the one whose edge is closest, within `slop` px. Exact hits win
+   * (distance 0), so overlapping markers still resolve to the one drawn under the finger.
+   */
+  function pick(point: maplibregl.Point, slop: number): maplibregl.MapGeoJSONFeature | undefined {
+    if (!map) return undefined;
+    const box: [maplibregl.PointLike, maplibregl.PointLike] = [
+      [point.x - slop, point.y - slop],
+      [point.x + slop, point.y + slop],
+    ];
+    const zoom = map.getZoom();
+    let best: maplibregl.MapGeoJSONFeature | undefined;
+    let bestDist = Infinity;
+    // Topmost layer first, so ties go to what is drawn on top.
+    for (const f of map.queryRenderedFeatures(box, { layers: ['stops', ...POINT_LAYERS] })) {
+      if (f.geometry.type !== 'Point') continue;
+      const c = map.project(f.geometry.coordinates as [number, number]);
+      const size =
+        f.layer.id === 'stops'
+          ? (PIE_SIZE / 2) * (f.properties.active ? 1 : PIE_SMALL)
+          : zoom < 7
+            ? 4
+            : zoom < 11
+              ? 6
+              : 9; // roughly the drawn dot radius
+      const d = Math.max(0, Math.hypot(c.x - point.x, c.y - point.y) - size);
+      if (d <= slop && d < bestDist) {
+        best = f;
+        bestDist = d;
+      }
+    }
+    return best;
+  }
 
   onDestroy(() => map?.remove());
 
