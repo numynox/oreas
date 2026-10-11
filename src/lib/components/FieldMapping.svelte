@@ -44,7 +44,7 @@
   const missingRequired = $derived(isId(draft.tableId) ? defs.filter((d) => d.required && !isId(draft.fields[d.key])) : []);
 
   // ---- create missing tables / columns ----
-  const todo = $derived(plan(drafts));
+  const todo = $derived(plan(drafts, schema));
   const todoText = $derived(describe(todo));
   let creating = $state(false);
 
@@ -177,13 +177,17 @@
         </ul>
         <button
           class="flex items-center gap-1.5 rounded-xl bg-violet-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
-          disabled={creating || !app.online}
+          disabled={creating || !app.online || !app.canWrite}
           onclick={createMissing}
         >
           {#if creating}<LoaderCircle class="size-4 animate-spin" />{:else}<Plus class="size-4" />{/if}
           Create missing tables and columns
         </button>
-        <p class="text-muted text-[11px]">Needs the token scope <code>schema.bases:write</code>. Existing data is not changed.</p>
+        {#if app.canWrite}
+          <p class="text-muted text-[11px]">Needs the token scope <code>schema.bases:write</code>. Existing data is not changed.</p>
+        {:else}
+          <p class="text-[11px] text-amber-700 dark:text-amber-400">Read-only access: add a write token in Settings to create columns.</p>
+        {/if}
       </div>
     {/if}
   {/if}

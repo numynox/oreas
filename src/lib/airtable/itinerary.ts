@@ -1,3 +1,4 @@
+import { costOf } from './activities';
 import type { DayKey, ResolvedMapping } from './fields';
 import type { AirtableRecord } from './types';
 
@@ -15,6 +16,8 @@ export interface Day {
   notes?: string;
   /** Photography highlights for the day (spots, best light/timing). */
   photoSpots?: string;
+  /** Cost of the budget items linked to this day (undefined = none linked). */
+  cost?: number;
   /** Linked activity record IDs, in Airtable order. */
   activityIds: string[];
   lat?: number;
@@ -54,6 +57,7 @@ export function toDay(rec: AirtableRecord, r: ResolvedMapping<DayKey>): Day {
     travelDetails: str(get('travelDetails')),
     notes: str(get('notes')),
     photoSpots: str(get('photoSpots')),
+    cost: costOf(get('cost'), r.fields.budget ? get('budget') : undefined, !!r.fields.budget),
     activityIds: Array.isArray(links) ? links.map((l) => (typeof l === 'string' ? l : (l as { id: string }).id)) : [],
     lat: ok ? lat : undefined,
     lng: ok ? lng : undefined,

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { BedDouble, Camera, ChevronRight, MapPinOff, StickyNote } from '@lucide/svelte';
+  import { Banknote, BedDouble, Camera, ChevronRight, MapPinOff, StickyNote } from '@lucide/svelte';
   import { slide } from 'svelte/transition';
   import { app } from '../state.svelte';
   import { parseDate, type Day } from '../airtable/itinerary';
-  import { formatDuration } from '../airtable/activities';
+  import { formatCost, formatDuration } from '../airtable/activities';
   import Img from './Img.svelte';
   import TypeIcon from './TypeIcon.svelte';
   import TravelInfo from './TravelInfo.svelte';
@@ -29,6 +29,7 @@
     ].filter((x) => x.text),
   );
   let open = $state<Record<string, boolean>>({});
+  const cost = $derived(formatCost(day.cost, app.resolvedDays?.fields.cost));
 </script>
 
 <!-- Compact day row: date column + header line (title, travel, overnight) + activity grid + collapsible notes / photo spots. -->
@@ -73,6 +74,11 @@
   <div class="min-w-0 flex-1 space-y-1.5">
     <header class="flex min-w-0 items-center gap-2 text-sm">
       {#if day.title}<span class="min-w-0 truncate font-bold">{day.title}</span>{/if}
+      {#if cost}
+        <span class="text-muted flex shrink-0 items-center gap-1 text-xs tabular-nums" title="Budget items of this day">
+          <Banknote class="size-3.5 text-emerald-600 dark:text-emerald-400" />{cost}
+        </span>
+      {/if}
       {#if day.travel || day.travelDetails}
         <span class="ml-auto flex min-w-0 shrink"><TravelInfo travel={day.travel} details={day.travelDetails} /></span>
       {/if}
@@ -116,6 +122,7 @@
                 <div class="text-muted flex items-center gap-1.5 truncate text-[10px] leading-tight">
                   {#if a.durationSec}<span>{formatDuration(a.durationSec)}</span>{/if}
                   {#if a.priority}<span>{a.priority}</span>{/if}
+                  {#if a.cost !== undefined}<span class="tabular-nums">{formatCost(a.cost, app.resolved?.fields.cost)}</span>{/if}
                   {#if a.lat === undefined}<span class="flex items-center gap-0.5 text-amber-600"><MapPinOff class="size-2.5" />unplaced</span>{/if}
                 </div>
               </div>

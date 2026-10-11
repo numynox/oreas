@@ -11,6 +11,7 @@ export interface Activity {
   type?: string;
   status?: string;
   durationSec?: number;
+  /** Cost from the budget (undefined = unknown: no budget items linked, or no cost column). */
   cost?: number;
   booking: boolean;
   url?: string;
@@ -45,6 +46,15 @@ function asNumber(v: unknown): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+/**
+ * A cost rollup sums to 0 when nothing is linked, so with a mapped Budget link column a cost only
+ * counts once at least one budget item is linked (an item of 0 then really means "free").
+ */
+export function costOf(value: unknown, links: unknown, hasBudget: boolean): number | undefined {
+  if (hasBudget && !(Array.isArray(links) && links.length)) return undefined;
+  return asNumber(value);
+}
+
 export function toActivity(rec: AirtableRecord, r: ResolvedMapping): Activity {
   const get = (k: FieldKey): unknown => {
     const f = r.fields[k];
@@ -65,7 +75,7 @@ export function toActivity(rec: AirtableRecord, r: ResolvedMapping): Activity {
     type: asString(get('type')),
     status: asString(get('status')),
     durationSec: asNumber(get('duration')),
-    cost: asNumber(get('cost')),
+    cost: costOf(get('cost'), r.fields.budget ? get('budget') : undefined, !!r.fields.budget),
     booking: !!first(get('booking')),
     url: asString(get('url')),
     notes: asString(get('notes')),
@@ -93,8 +103,10 @@ export function formatDuration(sec?: number): string | undefined {
 export function formatCost(value: number | undefined, f?: AirtableField): string | undefined {
   if (value == null) return undefined;
   if (value === 0) return 'Free';
-  const symbol = f?.options?.symbol ?? '';
-  const precision = f?.options?.precision ?? 0;
+  // Rollups and formulas keep the currency format under `result`.
+  const opts = f?.options?.result?.options ?? f?.options;
+  const symbol = opts?.symbol ?? '';
+  const precision = Number.isInteger(value) ? 0 : (opts?.precision ?? 0);
   const n = value.toLocaleString('en-US', { minimumFractionDigits: precision, maximumFractionDigits: precision });
   return `${symbol}${n}`;
 }

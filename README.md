@@ -12,6 +12,8 @@ Everything it uses is free: [Svelte 5](https://svelte.dev), [Vite](https://vite.
 - **Rate mode**: the **Rate** button walks through every active activity without a rating (in a geographic tour), zooms to it and shows its details with the choices Low, Medium, High and Must have. Ratings are saved to Airtable.
 - **Itinerary**: switch between **Explore** and **Itinerary** at the top of the panel (bookmarkable as `#itinerary`). The itinerary lists the trip day by day from the `Itinerary` table: date, day title, overnight city and accommodation, the travel leg (short label; the full travel details open in a popup), and the linked activities. Notes and photo spots are collapsed per day and expand on click. The overview on top (date range and all overnight stops) stays in place while the day list scrolls. Select a day by clicking it, with the overnight-stop chips, or step through the days with ↑/↓ (Esc shows the whole trip). The map then frames all of that day's activities plus last night's and tonight's stop, and draws the trip line through all overnight stops.
 - **Details**: an image carousel with a fullscreen lightbox, duration, cost, booking flag, notes, the website and a Google Maps link.
+- **Budget**: costs come from the `Cost (EUR)` rollup of the `Budget` table, on both activities and itinerary days. A cost is only shown when budget items are linked (an empty rollup is 0, which would otherwise read as "Free"). The itinerary shows each day's cost and the sum over all days.
+- **Read-only mode and share links**: Settings takes a write token, a read-only token, or both. With only the read-only token, rating and creating columns are disabled. **Settings → Share read-only link** encrypts the base ID and the read-only token with a password (PBKDF2 + AES-GCM) into a link (`…/#share=…`). The recipient opens it, enters the password, and Oreas stores the token in their browser, syncs and opens the map. The fragment is never sent to the server. To revoke access, delete the read-only token in Airtable.
 - **Unplaced activities**: records without Latitude/Longitude still appear in the list with an "Unplaced" badge.
 - **Offline-friendly cache**: data is stored in `localStorage`. It syncs automatically when the cache is more than 24 h old, or when you press sync.
 - **Offline images**: after each sync, the large thumbnail of every image is saved to IndexedDB in the background. Full-size images are saved when you first open them in the fullscreen viewer, or when you download them in Settings.
@@ -22,14 +24,14 @@ Everything it uses is free: [Svelte 5](https://svelte.dev), [Vite](https://vite.
 
 ## Airtable token
 
-Create a [personal access token](https://airtable.com/create/tokens) with:
+Create [personal access tokens](https://airtable.com/create/tokens), each limited to your trip base. One of them is enough:
 
-- scopes `data.records:read`, `schema.bases:read`, `data.records:write` (only needed for ratings) and `schema.bases:write` (only needed for **Create missing tables and columns**)
-- access limited to your trip base
+- **Write token**: scopes `data.records:read`, `schema.bases:read`, `data.records:write` (ratings) and `schema.bases:write` (**Create missing tables and columns**)
+- **Read-only token**: scopes `data.records:read` and `schema.bases:read`. Needed for share links; on its own it makes Oreas read-only.
 
 The base needs a table named `Activities` with at least a name column and `Latitude`/`Longitude` number columns. All other columns are optional and can be mapped in the app. Both tables (`Activities` and `Itinerary`) are found by these default names on the first sync and then remembered by ID, so renaming them is fine; if yours are named differently, pick them in **Settings → Field mapping**.
 
-The optional `Itinerary` table has one row per day: `Date` (required), `Day Title`, `Overnight city`, `Accommodation`, `Travel` (short label), `Travel details` (shown in a popup), `Activities` (links to the activity table), `Notes`, `Photo spots`, and `Overnight Latitude` / `Overnight Longitude` (place the stop on the map and draw the trip line).
+The optional `Itinerary` table has one row per day: `Date` (required), `Day Title`, `Overnight city`, `Accommodation`, `Travel` (short label), `Travel details` (shown in a popup), `Activities` (links to the activity table), `Notes`, `Cost (EUR)` and `Budget` (links to the `Budget` table), `Photo spots`, and `Overnight Latitude` / `Overnight Longitude` (place the stop on the map and draw the trip line).
 
 ## Deployment options
 
@@ -39,9 +41,9 @@ The API key is never shipped in the JavaScript bundle.
 |---|---|---|
 | Local dev | `.env` (git-ignored) | Vite dev proxy `/api/airtable` adds the key on the server |
 | Raspberry Pi (Docker) | Stack environment / `.env` | nginx proxy `/api/airtable` (GET, single-record PATCH, creating tables/fields) adds the key on the server |
-| GitHub Pages | Entered in **Settings** and kept in that browser's `localStorage` | Directly to `api.airtable.com` |
+| GitHub Pages | Entered in **Settings** (or opened from a share link) and kept in that browser's `localStorage` | Directly to `api.airtable.com` |
 
-In proxy mode the server provides a public `/config.json` containing the base ID, but never the key. If that file is missing, as on GitHub Pages, the app switches to direct mode.
+In proxy mode the server provides a public `/config.json` containing the base ID, but never the key. If that file is missing, as on GitHub Pages, the app switches to direct mode. Tokens entered in Settings (or from a share link) take precedence over the proxy.
 
 ### 1. Local
 
@@ -96,6 +98,7 @@ src/
     activities.ts            record → Activity conversion, formatting
     itinerary.ts             record → Day conversion, stays, date helpers
     cache.ts                 localStorage cache (24 h)
+  lib/share.ts               encrypted read-only share links
   lib/images.svelte.ts       offline image store (IndexedDB blobs → object URLs)
   lib/offlineMap.svelte.ts   offline map: tile plan for the activity area, bulk download, storage persistence
   service-worker.js          service worker template (app shell + map tile caching), built into dist/sw.js

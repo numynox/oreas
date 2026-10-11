@@ -30,6 +30,7 @@ import { images } from './images.svelte';
 import { offlineMap, planTiles, type Point } from './offlineMap.svelte';
 import type { AirtableAttachment } from './airtable/types';
 import type { StyleId } from './mapStyles';
+import { shareTokenFromHash, type SharePayload } from './share';
 
 export type FacetKey = 'type' | 'status' | 'region' | 'priority' | 'access';
 
@@ -141,6 +142,10 @@ class AppState {
   /** Writes not yet confirmed by Airtable (survive reloads / offline). */
   pending = $state<PendingWrite[]>([]);
   private flushing = false;
+  /** Encrypted read-only access from a share link, waiting for its password. */
+  shareToken = $state<string | null>(shareTokenFromHash());
+  /** False with a read-only token: ratings and creating tables/columns are disabled. */
+  canWrite = $derived(this.config?.canWrite ?? false);
   /** Active rating session. */
   rating = $state<{ queue: string[]; index: number; rated: number } | null>(null);
 
@@ -307,7 +312,10 @@ class AppState {
     this.systemDark = mq.matches;
     mq.addEventListener('change', (e) => (this.systemDark = e.matches));
     setInterval(() => (this.now = Date.now()), 30_000);
-    window.addEventListener('hashchange', () => (this.mode = modeFromHash()));
+    window.addEventListener('hashchange', () => {
+      this.mode = modeFromHash();
+      this.shareToken = shareTokenFromHash();
+    });
     window.addEventListener('online', () => {
       this.online = true;
       void this.flushWrites();
@@ -325,7 +333,7 @@ class AppState {
     this.imagesExpired = false;
     if (!isConfigComplete(cfg)) {
       this.cache = null;
-      this.showSettings = true;
+      this.showSettings = !this.shareToken; // a share link configures the app itself
       return;
     }
     this.mapping = loadMapping(cfg.baseId);
@@ -410,6 +418,27 @@ class AppState {
     if (this.config && isConfigComplete(this.config)) void this.sync();
   }
 
+  /** Unlocked share link: use its read-only token (replacing any tokens of this browser), sync and show the map. */
+  acceptShare(p: SharePayload) {
+    saveLocalSettings({ baseId: p.baseId, readKey: p.readKey });
+    this.leaveShare();
+    this.selectedId = null;
+    this.activeDayId = null;
+    this.activeStayDayIds = null;
+    this.setMode('explore');
+    this.showSettings = false;
+    this.applyConfig(buildConfig(this.server, loadLocalSettings()));
+    void this.sync();
+  }
+
+  /** Close the share dialog and drop the token from the URL. */
+  leaveShare() {
+    this.shareToken = null;
+    // Keep the entry's state: the back-button history (navigation.svelte.ts) lives in it.
+    if (shareTokenFromHash()) history.replaceState(history.state, '', location.pathname + location.search);
+    if (this.config && !isConfigComplete(this.config)) this.showSettings = true;
+  }
+
   setMapping(m: StoredMapping) {
     if (!this.config) return;
     const tableChanged = m.tableId !== this.mapping.tableId;
@@ -433,6 +462,10 @@ class AppState {
 
   /** Set a field of an activity: updates the local cache immediately, then writes to Airtable (queued if offline). */
   setField(activityId: string, key: FieldKey, value: string | null) {
+    if (!this.canWrite) {
+      this.toast('error', 'Read-only access – enter a write token in Settings to change data.');
+      return;
+    }
     const field = this.resolved?.fields[key];
     const rec = this.cache?.records.find((r) => r.id === activityId);
     if (!field || !rec) {
@@ -451,7 +484,7 @@ class AppState {
   async flushWrites() {
     const cfg = this.config;
     const tableId = this.cache?.tableId;
-    if (this.flushing || !cfg || !tableId || !this.online || !this.pending.length) return;
+    if (this.flushing || !cfg?.canWrite || !tableId || !this.online || !this.pending.length) return;
     this.flushing = true;
     let rejected = false;
     try {
@@ -479,6 +512,7 @@ class AppState {
 
   // ---- rating session -------------------------------------------------------
   startRating() {
+    if (!this.canWrite) return;
     const queue = tour(this.unrated).map((a) => a.id);
     if (!queue.length) {
       this.toast('success', 'Every activity already has a rating.', undefined, 3000);

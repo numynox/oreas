@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import { app } from '../state.svelte';
   import { daysBetween, formatDay, parseDate, scrollToDay, stays } from '../airtable/itinerary';
+  import { formatCost } from '../airtable/activities';
   import DayCard from './DayCard.svelte';
 
   /** Day-by-day itinerary, rendered inside the sidebar / bottom sheet. Days are selected manually (click, ↑/↓). */
@@ -33,6 +34,10 @@
       d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}) });
     return { text: `${fmt(first, false)} – ${fmt(last, true)}`, days: daysBetween(dated[0].date!, dated[dated.length - 1].date!) + 1 };
   });
+  /** Sum of the budget items linked to days (items linked only to an activity are not included). */
+  const dayCosts = $derived(days.filter((d) => d.cost !== undefined));
+  const total = $derived(dayCosts.length ? formatCost(dayCosts.reduce((n, d) => n + d.cost!, 0), app.resolvedDays?.fields.cost) : undefined);
+
   function gapBefore(i: number): number {
     if (i === 0) return 0;
     const a = days[i - 1].date;
@@ -69,7 +74,7 @@
       <div class="flex flex-wrap items-baseline gap-x-3">
         <div class="text-lg font-extrabold tracking-tight">{range.text}</div>
         <div class="text-muted text-xs">
-          {range.days} days · {tripStays.length} stop{tripStays.length === 1 ? '' : 's'} · {days.reduce((n, d) => n + d.activityIds.length, 0)} activities planned
+          {range.days} days · {tripStays.length} stop{tripStays.length === 1 ? '' : 's'} · {days.reduce((n, d) => n + d.activityIds.length, 0)} activities planned{#if total}{" · "}<span title="Sum of the budget items linked to days">{total} budget</span>{/if}
         </div>
       </div>
     {/if}

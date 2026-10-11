@@ -17,7 +17,7 @@ function apiRoot(cfg: AppConfig): string {
 function explain(status: number, body: string): string {
   switch (status) {
     case 401:
-      return 'Airtable rejected the API key (401). Check the token in Settings / .env.';
+      return 'Airtable rejected the token (401). Check the token in Settings / .env.';
     case 403:
       return 'Access denied (403). The token needs the scopes data.records:read, schema.bases:read, data.records:write (ratings) and schema.bases:write (creating tables/columns), and access to this base.';
     case 404:
@@ -34,13 +34,18 @@ function explain(status: number, body: string): string {
 }
 
 async function request<T>(cfg: AppConfig, path: string, init: { method?: string; body?: unknown } = {}, attempt = 0): Promise<T> {
+  const method = init.method ?? 'GET';
   const headers: Record<string, string> = {};
-  if (cfg.mode === 'direct' && cfg.apiKey) headers.Authorization = `Bearer ${cfg.apiKey}`;
+  if (cfg.mode === 'direct') {
+    const key = method === 'GET' ? cfg.readKey : cfg.writeKey;
+    if (!key) throw new AirtableError('Read-only access: enter a write token in Settings to change data.', 403);
+    headers.Authorization = `Bearer ${key}`;
+  }
   if (init.body !== undefined) headers['Content-Type'] = 'application/json';
   let res: Response;
   try {
     res = await fetch(`${apiRoot(cfg)}${path}`, {
-      method: init.method ?? 'GET',
+      method,
       headers,
       body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     });

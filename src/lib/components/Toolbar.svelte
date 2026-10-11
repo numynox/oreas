@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { CloudOff, CloudUpload, Monitor, Moon, Palette, RefreshCw, Settings, Star, Sun } from '@lucide/svelte';
+  import { CloudOff, CloudUpload, Eye, Monitor, Moon, Palette, RefreshCw, Settings, Star, Sun } from '@lucide/svelte';
   import { images } from '../images.svelte';
   import MapStylePicker from './MapStylePicker.svelte';
   import { FACETS, app, type FacetKey } from '../state.svelte';
@@ -40,7 +40,7 @@
     </label>
   {/if}
 
-  {#if app.resolved?.fields.priority && app.mode === 'explore'}
+  {#if app.resolved?.fields.priority && app.mode === 'explore' && app.canWrite}
     <button
       class="glass flex items-center gap-1.5 rounded-2xl px-2.5 py-2 text-xs font-semibold transition hover:brightness-105 {app.rating
         ? 'ring-2 ring-violet-500/70'
@@ -63,6 +63,15 @@
   <MapStylePicker />
 
   <div class="glass flex items-center gap-0.5 rounded-2xl p-1">
+    {#if app.config && !app.canWrite}
+      <button
+        class="text-muted flex items-center gap-1 rounded-xl px-2 py-1.5 text-xs transition hover:bg-slate-500/10"
+        title="Read-only access – add a write token in Settings to rate activities"
+        onclick={() => (app.showSettings = true)}
+      >
+        <Eye class="size-4" /><span class="hidden md:inline">Read-only</span>
+      </button>
+    {/if}
     {#if app.pending.length}
       <span
         class="flex items-center gap-1 rounded-xl px-2 py-1.5 text-xs text-violet-600 tabular-nums dark:text-violet-400"

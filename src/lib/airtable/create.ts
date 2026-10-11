@@ -1,6 +1,6 @@
 import { createField, createTable, type FieldSpec } from './client';
 import type { AppConfig } from './config';
-import { DEFS, TABLE_NAMES, type FieldDef, type MappingKind } from './fields';
+import { BUDGET_TABLE, DEFS, TABLE_NAMES, type FieldDef, type MappingKind } from './fields';
 import type { AirtableSchema } from './types';
 
 /**
@@ -23,6 +23,9 @@ const KINDS: MappingKind[] = ['activities', 'itinerary']; // activities first: t
 const text = { type: 'singleLineText' };
 const long = { type: 'multilineText' };
 const coord = { type: 'number', options: { precision: 6 } };
+// The API cannot create rollups, so a missing cost column becomes a plain currency column.
+const cost = { type: 'currency', options: { precision: 2, symbol: '€' } };
+const budget = { type: 'multipleRecordLinks', description: `Items of the ${BUDGET_TABLE} table` };
 const select = (...names: string[]) => ({ type: 'singleSelect', options: { choices: names.map((name) => ({ name })) } });
 
 /** Column type used when Oreas creates a column (`linkedTableId` is filled in at execution time). */
@@ -38,7 +41,8 @@ const SPECS: Record<MappingKind, Record<string, Omit<FieldSpec, 'name'>>> = {
     priority: select('Low', 'Medium', 'High', 'Must have'),
     access: select('Public transport', 'Car preferred', 'Car only'),
     duration: { type: 'duration', options: { durationFormat: 'h:mm' } },
-    cost: { type: 'currency', options: { precision: 0, symbol: '¥' } },
+    cost,
+    budget,
     booking: { type: 'checkbox', options: { icon: 'check', color: 'greenBright' } },
     url: { type: 'url' },
     notes: long,
@@ -54,6 +58,8 @@ const SPECS: Record<MappingKind, Record<string, Omit<FieldSpec, 'name'>>> = {
     activities: { type: 'multipleRecordLinks' },
     notes: long,
     photoSpots: long,
+    cost,
+    budget,
     lat: { ...coord, description: 'Overnight stop, WGS84 decimal degrees' },
     lng: { ...coord, description: 'Overnight stop, WGS84 decimal degrees' },
   },
@@ -64,7 +70,15 @@ export interface Plan {
   fields: { kind: MappingKind; def: FieldDef<string> }[];
 }
 
-export function plan(drafts: Drafts): Plan {
+/** Budget link columns can only be created when the base has a Budget table to link to. */
+const budgetTable = (schema?: AirtableSchema) => schema?.tables.find((t) => t.name.toLowerCase() === BUDGET_TABLE.toLowerCase());
+
+/** Whether Oreas can create this column (used to leave it out of the plan). */
+function creatable(def: FieldDef<string>, schema?: AirtableSchema): boolean {
+  return def.key !== 'budget' || !!budgetTable(schema);
+}
+
+export function plan(drafts: Drafts, schema?: AirtableSchema): Plan {
   const p: Plan = { tables: [], fields: [] };
   for (const kind of KINDS) {
     const d = drafts[kind];
@@ -73,13 +87,13 @@ export function plan(drafts: Drafts): Plan {
       p.tables.push(kind);
       continue;
     }
-    for (const def of DEFS[kind] as FieldDef<string>[]) if (!d.fields[def.key]) p.fields.push({ kind, def });
+    for (const def of DEFS[kind] as FieldDef<string>[]) if (!d.fields[def.key] && creatable(def, schema)) p.fields.push({ kind, def });
   }
   return p;
 }
 
 export function describe(p: Plan): string[] {
-  const out = p.tables.map((k) => `New table "${TABLE_NAMES[k]}" with ${DEFS[k].length} columns`);
+  const out = p.tables.map((k) => `New table "${TABLE_NAMES[k]}"`);
   for (const kind of KINDS) {
     const names = p.fields.filter((f) => f.kind === kind).map((f) => f.def.defaultName);
     if (names.length) out.push(`${kind === 'activities' ? 'Activities' : 'Itinerary'} table: ${names.join(', ')}`);
@@ -102,9 +116,10 @@ export async function execute(cfg: AppConfig, schema: AirtableSchema, drafts: Dr
   const out: Drafts = structuredClone(drafts);
   const tableNames = schema.tables.map((t) => t.name);
 
+  const budgetId = budgetTable(schema)?.id;
   const spec = (kind: MappingKind, def: FieldDef<string>, name: string): FieldSpec => {
     const s = { name, ...SPECS[kind][def.key] } as FieldSpec;
-    if (s.type === 'multipleRecordLinks') s.options = { linkedTableId: out.activities.tableId };
+    if (s.type === 'multipleRecordLinks') s.options = { linkedTableId: def.key === 'budget' ? budgetId : out.activities.tableId };
     return s;
   };
 
@@ -112,7 +127,7 @@ export async function execute(cfg: AppConfig, schema: AirtableSchema, drafts: Dr
     const defs = DEFS[kind] as FieldDef<string>[];
     if (p.tables.includes(kind)) {
       // The first column becomes the primary field (Name / Date).
-      const fields = defs.map((d) => spec(kind, d, d.defaultName));
+      const fields = defs.filter((d) => creatable(d, schema)).map((d) => spec(kind, d, d.defaultName));
       const name = freeName(TABLE_NAMES[kind], tableNames);
       const t = await createTable(cfg, name, fields, kind === 'activities' ? 'Places and activities (created by Oreas)' : 'Day-by-day plan (created by Oreas)');
       tableNames.push(name);

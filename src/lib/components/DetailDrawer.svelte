@@ -31,7 +31,7 @@
   const facts = $derived(
     [
       { icon: Clock, label: 'Duration', value: formatDuration(a.durationSec), show: !!fields.duration },
-      { icon: Banknote, label: 'Cost / person', value: formatCost(a.cost, fields.cost), show: !!fields.cost },
+      { icon: Banknote, label: 'Cost', value: formatCost(a.cost, fields.cost), show: !!fields.cost },
       { icon: Ticket, label: 'Booking', value: a.booking ? 'Required' : 'Not needed', show: !!fields.booking },
       {
         icon: /car only/i.test(a.access ?? '') ? Car : /car/i.test(a.access ?? '') ? CarFront : Bus,

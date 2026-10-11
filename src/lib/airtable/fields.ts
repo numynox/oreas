@@ -21,6 +21,7 @@ export type FieldKey =
   | 'status'
   | 'duration'
   | 'cost'
+  | 'budget'
   | 'booking'
   | 'url'
   | 'notes'
@@ -37,6 +38,8 @@ export type DayKey =
   | 'notes'
   | 'photoSpots'
   | 'accommodation'
+  | 'cost'
+  | 'budget'
   | 'lat'
   | 'lng';
 
@@ -47,6 +50,9 @@ export type MappingKind = 'activities' | 'itinerary';
  * remembered by its ID (rename-safe) and can be switched per table in the Field mapping dialog.
  */
 export const TABLE_NAMES: Record<MappingKind, string> = { activities: 'Activities', itinerary: 'Itinerary' };
+
+/** Name of the table that holds budget items (only needed to create Budget link columns). */
+export const BUDGET_TABLE = 'Budget';
 
 export interface FieldDef<K extends string = FieldKey> {
   key: K;
@@ -60,6 +66,8 @@ export interface FieldDef<K extends string = FieldKey> {
 
 const TEXT = ['singleLineText', 'multilineText', 'richText', 'email', 'phoneNumber'];
 const CATEGORY = ['singleSelect', 'singleLineText'];
+const COST = ['currency', 'number'];
+const BUDGET_HINT = 'Links to the Budget table. Without linked items the cost is shown as unknown, not as free.';
 
 export const FIELD_DEFS: FieldDef<FieldKey>[] = [
   { key: 'name', label: 'Name', defaultName: 'Name', required: true, types: [...TEXT, 'autoNumber'] },
@@ -72,7 +80,8 @@ export const FIELD_DEFS: FieldDef<FieldKey>[] = [
   { key: 'priority', label: 'Priority / rating', defaultName: 'Priority', required: false, types: ['singleSelect'] },
   { key: 'access', label: 'Access by', defaultName: 'Access by', required: false, types: CATEGORY },
   { key: 'duration', label: 'Est. duration', defaultName: 'Est. Duration', required: false, types: ['duration', 'number'] },
-  { key: 'cost', label: 'Est. cost', defaultName: 'Est. Cost (per person)', required: false, types: ['currency', 'number'] },
+  { key: 'cost', label: 'Cost', defaultName: 'Cost (EUR)', required: false, types: COST, hint: 'Usually a rollup of the Budget table' },
+  { key: 'budget', label: 'Budget items (links)', defaultName: 'Budget', required: false, types: ['multipleRecordLinks'], hint: BUDGET_HINT },
   { key: 'booking', label: 'Booking required', defaultName: 'Booking Required', required: false, types: ['checkbox'] },
   { key: 'url', label: 'Website / link', defaultName: 'Website / Booking Link', required: false, types: ['url', 'singleLineText'] },
   { key: 'notes', label: 'Notes', defaultName: 'Notes', required: false, types: ['multilineText', 'richText', 'singleLineText'] },
@@ -89,6 +98,8 @@ export const DAY_FIELD_DEFS: FieldDef<DayKey>[] = [
   { key: 'activities', label: 'Activities (links)', defaultName: 'Activities', required: false, types: ['multipleRecordLinks'] },
   { key: 'notes', label: 'Notes', defaultName: 'Notes', required: false, types: ['multilineText', 'richText', 'singleLineText'] },
   { key: 'photoSpots', label: 'Photo spots', defaultName: 'Photo spots', required: false, types: ['multilineText', 'richText', 'singleLineText'] },
+  { key: 'cost', label: 'Cost', defaultName: 'Cost (EUR)', required: false, types: COST, hint: 'Usually a rollup of the Budget table' },
+  { key: 'budget', label: 'Budget items (links)', defaultName: 'Budget', required: false, types: ['multipleRecordLinks'], hint: BUDGET_HINT },
   { key: 'lat', label: 'Overnight latitude', defaultName: 'Overnight Latitude', required: false, types: ['number'] },
   { key: 'lng', label: 'Overnight longitude', defaultName: 'Overnight Longitude', required: false, types: ['number'] },
 ];
@@ -115,6 +126,8 @@ const ITINERARY_SEEDS: Record<string, StoredMapping<DayKey>> = {
       notes: 'fldj0MjMOE3YqfUIt',
       photoSpots: 'fldmAffjIRdZzafQ9',
       accommodation: 'fldT54hTNmgUJm9th',
+      cost: 'fld0PV4DMdIVTGS5W',
+      budget: 'fldVxPYjEfKIBypLU',
       lat: 'fld4Up4If3PuQhMBC',
       lng: 'fldP59286PozlQoJQ',
     },
@@ -135,7 +148,8 @@ const SEEDS: Record<string, StoredMapping> = {
       type: 'fldwgoayet85PHZT0',
       status: 'fld04tOIKDdAyTpou',
       duration: 'fldFQ7moSYOFR0JXG',
-      cost: 'fldWzsu84kozs3pj4',
+      cost: 'fldaDEzK0gKas1vcX',
+      budget: 'fldwg7ilTUItQCOLF',
       booking: 'fldlFECFbMe8M05eR',
       url: 'fldANn6IhEi8gNL0H',
       notes: 'fldeOtJEhZkCjqsQG',

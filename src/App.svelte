@@ -16,6 +16,7 @@
   import Toolbar from './lib/components/Toolbar.svelte';
   import ModeSwitch from './lib/components/ModeSwitch.svelte';
   import ItineraryPanel from './lib/components/ItineraryPanel.svelte';
+  import ShareUnlock from './lib/components/ShareUnlock.svelte';
 
   let mapView: ReturnType<typeof MapView> | undefined = $state();
   /** Height of the floating mode switch + toolbar on mobile (the map behind it is covered). */
@@ -235,7 +236,8 @@
   {/if}
 </main>
 
-{#if app.showSettings}<SettingsModal />{/if}
-{#if app.showMapping && !app.showSettings}<FieldMapping />{/if}
+{#if app.ready && app.shareToken}<ShareUnlock />
+{:else if app.showSettings}<SettingsModal />
+{:else if app.showMapping}<FieldMapping />{/if}
 {#if app.lightbox}<Lightbox />{/if}
 <Toasts />
